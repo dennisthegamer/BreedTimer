@@ -1,0 +1,23 @@
+{
+  "breedtimer.config.title": "BreedTimer Einstellungen",
+  "breedtimer.config.category.general": "Allgemein",
+  "breedtimer.config.category.rendering": "Darstellung",
+  "breedtimer.config.category.notifications": "Benachrichtigungen",
+  "breedtimer.config.enabled": "Aktiviert",
+  "breedtimer.config.enabled.desc": "Aktiviert oder deaktiviert das Zucht-Timer-Overlay",
+  "breedtimer.config.scanRadius": "Scan-Radius",
+  "breedtimer.config.scanRadius.desc": "Wie weit nach züchtbaren Tieren gesucht wird (in Blöcken)",
+  "breedtimer.config.fadeStartDistance": "Ausblend-Startentfernung",
+  "breedtimer.config.fadeEndDistance": "Ausblend-Endentfernung",
+  "breedtimer.config.fovAngle": "Sichtfeld-Winkel",
+  "breedtimer.config.showBabyTimer": "Baby-Wachstumstimer anzeigen",
+  "breedtimer.config.backgroundOpacity": "Hintergrund-Transparenz",
+  "breedtimer.config.playSound": "Ton abspielen wenn bereit",
+  "breedtimer.config.compactMode": "Kompaktmodus",
+  "key.category.breedtimer.breedtimer": "Breed Timer",
+  "key.breedtimer.toggleEnabled": "An/Aus umschalten",
+  "key.breedtimer.toggleCompact": "Kompaktmodus umschalten",
+  "breedtimer.state.ready": "\u2713 Bereit",
+  "breedtimer.state.in_love": "\u2764 Verliebt!",
+  "breedtimer.state.growing": "Wächst: %s"
+}

@@ -1,0 +1,23 @@
+{
+  "breedtimer.config.title": "BreedTimer Settings",
+  "breedtimer.config.category.general": "General",
+  "breedtimer.config.category.rendering": "Rendering",
+  "breedtimer.config.category.notifications": "Notifications",
+  "breedtimer.config.enabled": "Enabled",
+  "breedtimer.config.enabled.desc": "Enable or disable the breed timer overlay",
+  "breedtimer.config.scanRadius": "Scan Radius",
+  "breedtimer.config.scanRadius.desc": "How far to scan for breedable animals (in blocks)",
+  "breedtimer.config.fadeStartDistance": "Fade Start Distance",
+  "breedtimer.config.fadeEndDistance": "Fade End Distance",
+  "breedtimer.config.fovAngle": "Field of View Angle",
+  "breedtimer.config.showBabyTimer": "Show Baby Growth Timer",
+  "breedtimer.config.backgroundOpacity": "Background Opacity",
+  "breedtimer.config.playSound": "Play Sound When Ready",
+  "breedtimer.config.compactMode": "Compact Mode",
+  "key.category.breedtimer.breedtimer": "Breed Timer",
+  "key.breedtimer.toggleEnabled": "Toggle On/Off",
+  "key.breedtimer.toggleCompact": "Toggle Compact Mode",
+  "breedtimer.state.ready": "\u2713 Ready",
+  "breedtimer.state.in_love": "\u2764 In Love!",
+  "breedtimer.state.growing": "Growing: %s"
+}
