@@ -19,3 +19,5 @@ Thumbs.db
 
 # Fabric Loom
 remappedSrc/
+/net/
+/gradle/
