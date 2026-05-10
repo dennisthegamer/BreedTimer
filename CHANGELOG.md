@@ -5,6 +5,42 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-10
+
+### Added
+
+**Villager support**
+- Adult Villagers now show `✓ Ready` (green) by default
+- After breeding (detected when Villager stops showing heart particles), a 5-minute breed cooldown timer is shown — identical behavior to animals
+- Baby Villagers show `Growing: M:SS` countdown (20 minutes until adult)
+- Compact mode shows a dedicated second HUD line: `Villagers  X ready  Y cooldown  Z babies`
+- Sound alert (Pling) plays when a Villager comes back from cooldown, consistent with animal ready-sound
+- Baby Villager and Villager cooldown timers persist across world reloads
+- FOV culling, distance fade, and line-of-sight checks apply to Villager labels — identical to animal behavior
+- WanderingTrader intentionally excluded — cannot breed
+
+**New animal coverage**
+- Added **Strider** (breeds with Warped Fungus)
+- Added **Hoglin** (breeds with Crimson Fungus)
+- Added **Armadillo** (breeds with Spider Eyes)
+- Added **MushroomCow / Mooshroom** (was previously missed — extends `AbstractCow`, not `Cow`)
+- Added **Nautilus** (breeds when tamed, new mob in MC 26.1)
+
+**Separate enable toggles for Animals and Villagers**
+- New config options: `Show Animals` and `Show Villagers` in the General tab
+- Each can be disabled independently; the N-keybind still toggles the whole mod
+- Compact HUD lines only appear for enabled entity types
+- Disabling a type also stops tick-tracking and sound for that type
+
+**Timer sync with `/tick sprint`**
+- All cooldown and baby-growth timers now use server game time (`level.getGameTime()`) for delta calculation
+- Timers speed up correctly when the server runs at an accelerated tick rate
+
+### Changed
+- Compact mode HUD now labels each line: `Animals  …` and `Villagers  …` for clear distinction
+
+---
+
 ## [1.0.0] - 2026-04-06
 
 ### Added

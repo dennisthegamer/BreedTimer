@@ -5,6 +5,10 @@
   "breedtimer.config.category.notifications": "Notifications",
   "breedtimer.config.enabled": "Enabled",
   "breedtimer.config.enabled.desc": "Enable or disable the breed timer overlay",
+  "breedtimer.config.showAnimals": "Show Animals",
+  "breedtimer.config.showAnimals.desc": "Track and display breed timers for animals",
+  "breedtimer.config.showVillagers": "Show Villagers",
+  "breedtimer.config.showVillagers.desc": "Track and display breed timers for villagers",
   "breedtimer.config.scanRadius": "Scan Radius",
   "breedtimer.config.scanRadius.desc": "How far to scan for breedable animals (in blocks)",
   "breedtimer.config.fadeStartDistance": "Fade Start Distance",
@@ -17,7 +21,7 @@
   "key.category.breedtimer.breedtimer": "Breed Timer",
   "key.breedtimer.toggleEnabled": "Toggle On/Off",
   "key.breedtimer.toggleCompact": "Toggle Compact Mode",
-  "breedtimer.state.ready": "\u2713 Ready",
-  "breedtimer.state.in_love": "\u2764 In Love!",
+  "breedtimer.state.ready": "✓ Ready",
+  "breedtimer.state.in_love": "❤ In Love!",
   "breedtimer.state.growing": "Growing: %s"
 }

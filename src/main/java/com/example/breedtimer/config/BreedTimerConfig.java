@@ -19,6 +19,8 @@ public class BreedTimerConfig {
                     .build();
 
     @SerialEntry public boolean enabled = true;
+    @SerialEntry public boolean showAnimals  = true;
+    @SerialEntry public boolean showVillagers = true;
     @SerialEntry public int scanRadius = 16;
     @SerialEntry public int fadeStartDistance = 16;
     @SerialEntry public int fadeEndDistance = 20;

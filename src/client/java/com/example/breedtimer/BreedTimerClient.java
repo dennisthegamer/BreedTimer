@@ -5,6 +5,7 @@ import com.example.breedtimer.render.BreedTimerHud;
 import com.example.breedtimer.util.BreedCooldownHelper;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalState;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
+import com.example.breedtimer.util.VillagerCooldownHelper;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
@@ -32,7 +33,9 @@ public class BreedTimerClient implements ClientModInitializer {
     );
     private static KeyMapping toggleEnabledKey;
     private static KeyMapping toggleCompactKey;
-    private final Set<UUID> previouslyReady = new HashSet<>();
+
+    private final Set<UUID> previouslyReady   = new HashSet<>();
+    private final Set<UUID> previouslyWilling = new HashSet<>();
 
     @Override
     public void onInitializeClient() {
@@ -62,21 +65,21 @@ public class BreedTimerClient implements ClientModInitializer {
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             String worldId = getWorldId(handler);
             BreedCooldownHelper.onWorldJoin(worldId);
+            VillagerCooldownHelper.onWorldJoin(worldId);
         });
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> BreedCooldownHelper.onWorldLeave());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            BreedCooldownHelper.onWorldLeave();
+            VillagerCooldownHelper.onWorldLeave();
+        });
     }
 
     private String getWorldId(ClientPacketListener handler) {
         var serverData = handler.getServerData();
-        if (serverData != null) {
-            return sanitize(serverData.ip);
-        }
-        // Singleplayer — use level name
+        if (serverData != null) return sanitize(serverData.ip);
         Minecraft mc = Minecraft.getInstance();
-        if (mc.getSingleplayerServer() != null) {
+        if (mc.getSingleplayerServer() != null)
             return sanitize(mc.getSingleplayerServer().getWorldData().getLevelSettings().levelName());
-        }
         return "unknown";
     }
 
@@ -97,31 +100,50 @@ public class BreedTimerClient implements ClientModInitializer {
             BreedTimerConfig.HANDLER.save();
         }
 
-        if (!BreedTimerConfig.get().enabled) return;
+        BreedTimerConfig config = BreedTimerConfig.get();
+        if (!config.enabled) return;
 
         Player player = mc.player;
         Level level = mc.level;
         if (player == null || level == null) return;
 
-        // Update client-side cooldown tracking every tick (skip when paused)
-        BreedCooldownHelper.tick(level, player, mc.isPaused());
+        if (config.showAnimals)   BreedCooldownHelper.tick(level, player, mc.isPaused());
+        if (config.showVillagers) VillagerCooldownHelper.tick(level, player, mc.isPaused());
 
-        if (!BreedTimerConfig.get().playSound) return;
+        if (!config.playSound) return;
 
-        List<AnimalTimerInfo> animals = BreedCooldownHelper.getVisibleAnimals(player, level);
-        Set<UUID> currentlyReady = new HashSet<>();
-
-        for (AnimalTimerInfo info : animals) {
-            UUID uuid = info.animal().getUUID();
-            if (info.state() == AnimalState.READY) {
-                currentlyReady.add(uuid);
-                if (!previouslyReady.contains(uuid)) {
-                    player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
+        if (config.showAnimals) {
+            // Animal ready sound
+            List<AnimalTimerInfo> animals = BreedCooldownHelper.getVisibleAnimals(player, level);
+            Set<UUID> currentlyReady = new HashSet<>();
+            for (AnimalTimerInfo info : animals) {
+                UUID uuid = info.animal().getUUID();
+                if (info.state() == AnimalState.READY) {
+                    currentlyReady.add(uuid);
+                    if (!previouslyReady.contains(uuid)) {
+                        player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
+                    }
                 }
             }
+            previouslyReady.clear();
+            previouslyReady.addAll(currentlyReady);
         }
 
-        previouslyReady.clear();
-        previouslyReady.addAll(currentlyReady);
+        if (config.showVillagers) {
+            // Villager ready sound (plays when villager comes back from cooldown)
+            List<VillagerCooldownHelper.VillagerTimerInfo> villagers = VillagerCooldownHelper.getVisibleVillagers(player, level);
+            Set<UUID> currentlyVillagerReady = new HashSet<>();
+            for (VillagerCooldownHelper.VillagerTimerInfo info : villagers) {
+                UUID uuid = info.villager().getUUID();
+                if (info.state() == VillagerCooldownHelper.VillagerState.READY) {
+                    currentlyVillagerReady.add(uuid);
+                    if (!previouslyWilling.contains(uuid)) {
+                        player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
+                    }
+                }
+            }
+            previouslyWilling.clear();
+            previouslyWilling.addAll(currentlyVillagerReady);
+        }
     }
 }

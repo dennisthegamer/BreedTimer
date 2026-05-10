@@ -6,7 +6,10 @@ import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import net.minecraft.world.entity.animal.bee.Bee;
 import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.animal.chicken.Chicken;
+import net.minecraft.world.entity.animal.armadillo.Armadillo;
 import net.minecraft.world.entity.animal.cow.Cow;
+import net.minecraft.world.entity.animal.cow.MushroomCow;
+import net.minecraft.world.entity.animal.nautilus.Nautilus;
 import net.minecraft.world.entity.animal.equine.Donkey;
 import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.animal.equine.Llama;
@@ -23,6 +26,8 @@ import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.animal.sniffer.Sniffer;
 import net.minecraft.world.entity.animal.turtle.Turtle;
 import net.minecraft.world.entity.animal.wolf.Wolf;
+import net.minecraft.world.entity.monster.hoglin.Hoglin;
+import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -65,6 +70,7 @@ public class BreedCooldownHelper {
     private static final Map<UUID, Integer> loveMap = new HashMap<>();
     private static final Map<UUID, Integer> babyTimerMap = new HashMap<>();
     private static String currentWorldId = null;
+    private static long lastGameTime = -1;
 
     public enum AnimalState {
         READY,
@@ -80,6 +86,7 @@ public class BreedCooldownHelper {
         cooldownMap.clear();
         loveMap.clear();
         babyTimerMap.clear();
+        lastGameTime = -1;
         loadData();
     }
 
@@ -91,6 +98,7 @@ public class BreedCooldownHelper {
         cooldownMap.clear();
         loveMap.clear();
         babyTimerMap.clear();
+        lastGameTime = -1;
     }
 
     private static Path getSaveFile() {
@@ -181,38 +189,34 @@ public class BreedCooldownHelper {
     public static void tick(Level level, Player player, boolean paused) {
         if (paused) return;
 
-        // Tick down love timers
+        long currentGameTime = level.getGameTime();
+        int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
+        lastGameTime = currentGameTime;
+
         loveMap.entrySet().removeIf(entry -> {
-            entry.setValue(entry.getValue() - 1);
+            entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Tick down cooldowns
         cooldownMap.entrySet().removeIf(entry -> {
-            entry.setValue(entry.getValue() - 1);
+            entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Track baby growth
+        // Baby growth tracking
         BreedTimerConfig config = BreedTimerConfig.get();
-        int radius = config.scanRadius;
-        AABB scanBox = player.getBoundingBox().inflate(radius);
+        AABB scanBox = player.getBoundingBox().inflate(config.scanRadius);
         List<Animal> animals = level.getEntitiesOfClass(Animal.class, scanBox);
-
         for (Animal animal : animals) {
             if (!isSupportedAnimal(animal)) continue;
             UUID uuid = animal.getUUID();
-
             if (animal.isBaby()) {
                 if (!babyTimerMap.containsKey(uuid)) {
                     babyTimerMap.put(uuid, BABY_GROW_TICKS);
                 } else {
-                    int remaining = babyTimerMap.get(uuid) - 1;
-                    if (remaining <= 0) {
-                        babyTimerMap.remove(uuid);
-                    } else {
-                        babyTimerMap.put(uuid, remaining);
-                    }
+                    int remaining = babyTimerMap.get(uuid) - delta;
+                    if (remaining <= 0) babyTimerMap.remove(uuid);
+                    else babyTimerMap.put(uuid, remaining);
                 }
             } else {
                 babyTimerMap.remove(uuid);
@@ -292,21 +296,21 @@ public class BreedCooldownHelper {
         return String.format("%d:%02d", minutes, seconds);
     }
 
-    public static boolean isOutOfFieldOfView(Player player, Animal animal) {
+    public static boolean isOutOfFieldOfView(Player player, Entity entity) {
         BreedTimerConfig config = BreedTimerConfig.get();
         double fovCos = Math.cos(Math.toRadians(config.fovAngle / 2.0));
 
         Vec3 eyePos = player.getEyePosition(1.0f);
         Vec3 lookDir = player.getLookAngle().normalize();
-        Vec3 animalPos = animal.position().add(0, animal.getBbHeight() / 2.0, 0);
-        Vec3 toAnimal = animalPos.subtract(eyePos).normalize();
+        Vec3 entityPos = entity.position().add(0, entity.getBbHeight() / 2.0, 0);
+        Vec3 toEntity = entityPos.subtract(eyePos).normalize();
 
-        return lookDir.dot(toAnimal) < fovCos;
+        return lookDir.dot(toEntity) < fovCos;
     }
 
-    public static float getDistanceFade(Player player, Animal animal) {
+    public static float getDistanceFade(Player player, Entity entity) {
         BreedTimerConfig config = BreedTimerConfig.get();
-        double dist = player.position().distanceTo(animal.position());
+        double dist = player.position().distanceTo(entity.position());
 
         if (dist <= config.fadeStartDistance) return 1.0f;
         if (dist >= config.fadeEndDistance) return 0.0f;
@@ -336,6 +340,11 @@ public class BreedCooldownHelper {
                 || entity instanceof Bee
                 || entity instanceof Turtle
                 || entity instanceof Axolotl
-                || entity instanceof Frog;
+                || entity instanceof Frog
+                || entity instanceof Strider
+                || entity instanceof Hoglin
+                || entity instanceof MushroomCow
+                || entity instanceof Armadillo
+                || entity instanceof Nautilus;
     }
 }

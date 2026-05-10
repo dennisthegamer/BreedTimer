@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -28,11 +29,13 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
     private void breedtimer$onSubmit(S state, PoseStack poseStack,
                                       SubmitNodeCollector collector, CameraRenderState camera,
                                       CallbackInfo ci) {
-        if (!BreedTimerConfig.get().enabled) return;
         if (!(state instanceof LivingEntityRenderState livingState)) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) return;
+
+        BreedTimerConfig config = BreedTimerConfig.get();
+        if (!config.enabled) return;
 
         double x = livingState.x;
         double y = livingState.y;
@@ -41,24 +44,39 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
 
         AABB searchBox = new AABB(x - 1.0, y - 1.0, z - 1.0, x + 1.0, y + 1.0, z + 1.0);
 
-        List<Animal> nearby = mc.level.getEntitiesOfClass(Animal.class, searchBox,
-                BreedCooldownHelper::isSupportedAnimal);
-
-        if (nearby.isEmpty()) return;
-
-        // Find the closest animal to the render state position
-        Animal closest = null;
-        double closestDist = Double.MAX_VALUE;
-        for (Animal animal : nearby) {
-            double dist = animal.position().distanceToSqr(statePos);
-            if (dist < closestDist) {
-                closestDist = dist;
-                closest = animal;
+        if (config.showAnimals) {
+            List<Animal> nearby = mc.level.getEntitiesOfClass(Animal.class, searchBox,
+                    BreedCooldownHelper::isSupportedAnimal);
+            if (!nearby.isEmpty()) {
+                Animal closest = findClosest(nearby, statePos);
+                if (closest != null) {
+                    TimerLabelRenderer.renderLabel(state, closest, poseStack, collector, camera);
+                    return;
+                }
             }
         }
 
-        if (closest != null) {
-            TimerLabelRenderer.renderLabel(state, closest, poseStack, collector, camera);
+        if (config.showVillagers) {
+            List<Villager> nearbyVillagers = mc.level.getEntitiesOfClass(Villager.class, searchBox);
+            if (!nearbyVillagers.isEmpty()) {
+                Villager closest = findClosest(nearbyVillagers, statePos);
+                if (closest != null) {
+                    TimerLabelRenderer.renderVillagerLabel(state, closest, poseStack, collector, camera);
+                }
+            }
         }
+    }
+
+    private static <E extends Entity> E findClosest(List<E> entities, Vec3 pos) {
+        E closest = null;
+        double closestDist = Double.MAX_VALUE;
+        for (E e : entities) {
+            double dist = e.position().distanceToSqr(pos);
+            if (dist < closestDist) {
+                closestDist = dist;
+                closest = e;
+            }
+        }
+        return closest;
     }
 }
