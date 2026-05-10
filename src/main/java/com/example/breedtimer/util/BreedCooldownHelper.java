@@ -10,6 +10,8 @@ import net.minecraft.world.entity.animal.armadillo.Armadillo;
 import net.minecraft.world.entity.animal.cow.Cow;
 import net.minecraft.world.entity.animal.cow.MushroomCow;
 import net.minecraft.world.entity.animal.nautilus.Nautilus;
+import net.minecraft.world.entity.monster.hoglin.Hoglin;
+import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.animal.equine.Donkey;
 import net.minecraft.world.entity.animal.equine.Horse;
 import net.minecraft.world.entity.animal.equine.Llama;
@@ -26,8 +28,6 @@ import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.animal.sniffer.Sniffer;
 import net.minecraft.world.entity.animal.turtle.Turtle;
 import net.minecraft.world.entity.animal.wolf.Wolf;
-import net.minecraft.world.entity.monster.hoglin.Hoglin;
-import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ClipContext;
@@ -193,30 +193,38 @@ public class BreedCooldownHelper {
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
 
+        // Tick down love timers
         loveMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
+        // Tick down cooldowns
         cooldownMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Baby growth tracking
+        // Track baby growth
         BreedTimerConfig config = BreedTimerConfig.get();
-        AABB scanBox = player.getBoundingBox().inflate(config.scanRadius);
+        int radius = config.scanRadius;
+        AABB scanBox = player.getBoundingBox().inflate(radius);
         List<Animal> animals = level.getEntitiesOfClass(Animal.class, scanBox);
+
         for (Animal animal : animals) {
             if (!isSupportedAnimal(animal)) continue;
             UUID uuid = animal.getUUID();
+
             if (animal.isBaby()) {
                 if (!babyTimerMap.containsKey(uuid)) {
                     babyTimerMap.put(uuid, BABY_GROW_TICKS);
                 } else {
                     int remaining = babyTimerMap.get(uuid) - delta;
-                    if (remaining <= 0) babyTimerMap.remove(uuid);
-                    else babyTimerMap.put(uuid, remaining);
+                    if (remaining <= 0) {
+                        babyTimerMap.remove(uuid);
+                    } else {
+                        babyTimerMap.put(uuid, remaining);
+                    }
                 }
             } else {
                 babyTimerMap.remove(uuid);

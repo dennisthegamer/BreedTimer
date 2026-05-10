@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "EntityRendererMixin",
-    "AnimalEventMixin",
-    "VillagerEventMixin"
+    "AnimalEventMixin"
   ],
   "injectors": {
     "defaultRequire": 1
