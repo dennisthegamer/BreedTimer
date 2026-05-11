@@ -23,5 +23,8 @@
   "key.breedtimer.toggleCompact": "Toggle Compact Mode",
   "breedtimer.state.ready": "✓ Ready",
   "breedtimer.state.in_love": "❤ In Love!",
-  "breedtimer.state.growing": "Growing: %s"
+  "breedtimer.state.growing": "Growing: %s",
+  "breedtimer.turtle_egg.fresh": "%s× Egg",
+  "breedtimer.turtle_egg.cracking": "%s× Cracking",
+  "breedtimer.turtle_egg.hatching": "%s× Hatching!"
 }

@@ -2,6 +2,7 @@ package com.example.breedtimer;
 
 import com.example.breedtimer.config.BreedTimerConfig;
 import com.example.breedtimer.render.BreedTimerHud;
+import com.example.breedtimer.render.TurtleEggRenderer;
 import com.example.breedtimer.util.BreedCooldownHelper;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalState;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
@@ -12,6 +13,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -62,6 +64,8 @@ public class BreedTimerClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 
+        LevelRenderEvents.COLLECT_SUBMITS.register(TurtleEggRenderer::render);
+
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             String worldId = getWorldId(handler);
             BreedCooldownHelper.onWorldJoin(worldId);
@@ -108,6 +112,7 @@ public class BreedTimerClient implements ClientModInitializer {
         if (player == null || level == null) return;
 
         if (config.showAnimals)   BreedCooldownHelper.tick(level, player, mc.isPaused());
+        if (config.showAnimals)   TurtleEggRenderer.tick(player, level, config);
         if (config.showVillagers) VillagerCooldownHelper.tick(level, player, mc.isPaused());
 
         if (!config.playSound) return;

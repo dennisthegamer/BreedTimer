@@ -79,6 +79,19 @@ public class BreedTimerHud {
             graphics.fill(x - 2, currentY - 2, x + mc.font.width(animalText) + 2, currentY + mc.font.lineHeight + 2, bgColor);
             graphics.text(mc.font, animalText, x, currentY, 0xFFFFFFFF, true);
             currentY += mc.font.lineHeight + 4;
+
+            int[] eggCounts = TurtleEggRenderer.getEggCounts();
+            int totalEggs = eggCounts[0] + eggCounts[1] + eggCounts[2];
+            if (totalEggs > 0) {
+                MutableComponent eggText = Component.empty()
+                        .append(Component.literal("Turtle Eggs  ").withStyle(ChatFormatting.WHITE))
+                        .append(Component.literal(eggCounts[0] + " fresh ").withStyle(ChatFormatting.AQUA))
+                        .append(Component.literal(eggCounts[1] + " cracking ").withStyle(ChatFormatting.GOLD))
+                        .append(Component.literal(eggCounts[2] + " hatching").withStyle(ChatFormatting.GREEN));
+                graphics.fill(x - 2, currentY - 2, x + mc.font.width(eggText) + 2, currentY + mc.font.lineHeight + 2, bgColor);
+                graphics.text(mc.font, eggText, x, currentY, 0xFFFFFFFF, true);
+                currentY += mc.font.lineHeight + 4;
+            }
         }
 
         if (config.showVillagers && !villagers.isEmpty()) {
