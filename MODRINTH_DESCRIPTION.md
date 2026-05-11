@@ -18,6 +18,10 @@ This lightweight client-side Fabric mod displays floating timers above breedable
 - **Baby villager** growth countdown — 20 minutes until adult
 - **Compact HUD** shows a dedicated villager line: `Villagers  X ready  Y cooldown  Z babies`
 
+### Turtle Egg Tracking
+- **Floating labels** above turtle egg blocks showing the current hatch stage — Fresh (cyan), Cracking (orange), Hatching! (green)
+- **Compact HUD** shows a dedicated egg line when eggs are nearby: `Turtle Eggs  X fresh  Y cracking  Z hatching`
+
 ### Smart Rendering
 - **Distance-based fading** — Timers fade out smoothly at longer distances
 - **FOV culling** — Only renders timers for entities within your field of view

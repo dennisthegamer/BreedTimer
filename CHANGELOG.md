@@ -5,6 +5,22 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - 2026-05-11
+
+### Added
+- **Turtle egg floating labels** — Labels now appear above turtle egg blocks showing the current hatch stage:
+  - `Nx Egg` — freshly laid (cyan)
+  - `Nx Cracking` — first cracks (orange)
+  - `Nx Hatching!` — about to hatch (green)
+- **Compact HUD: turtle eggs** — When turtle eggs are nearby, a dedicated line is shown in compact mode: `Turtle Eggs  X fresh  Y cracking  Z hatching`
+
+> **Note:** Turtle egg hatch time is random-tick based and non-deterministic — the hatch stage (0–2 of 3) is displayed rather than an exact remaining time.
+
+### Fixed
+- **Villager tracking completely fixed** — `VillagerEventMixin` was never registered in the mixin config, meaning villager cooldowns and baby timers were never tracked. A previous fix attempt crashed on startup because it injected into `Villager.handleEntityEvent` (not declared in `AbstractVillager`). The mixin now correctly injects into `AbstractVillager.addParticlesAroundSelf` to reliably detect heart particles.
+
+---
+
 ## [1.1.0] - 2026-05-10
 
 ### Added
