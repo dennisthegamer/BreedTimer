@@ -7,20 +7,20 @@ import com.example.breedtimer.util.BreedCooldownHelper;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalState;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
 import com.example.breedtimer.util.VillagerCooldownHelper;
-import com.mojang.blaze3d.platform.InputConstants;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
+import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.minecraft.client.KeyMapping;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.resources.Identifier;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.util.InputUtil;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.HashSet;
@@ -30,11 +30,8 @@ import java.util.UUID;
 
 public class BreedTimerClient implements ClientModInitializer {
 
-    private static final KeyMapping.Category KEYBIND_CATEGORY = KeyMapping.Category.register(
-            Identifier.fromNamespaceAndPath("breedtimer", "breedtimer")
-    );
-    private static KeyMapping toggleEnabledKey;
-    private static KeyMapping toggleCompactKey;
+    private static KeyBinding toggleEnabledKey;
+    private static KeyBinding toggleCompactKey;
 
     private final Set<UUID> previouslyReady   = new HashSet<>();
     private final Set<UUID> previouslyWilling = new HashSet<>();
@@ -43,28 +40,32 @@ public class BreedTimerClient implements ClientModInitializer {
     public void onInitializeClient() {
         BreedTimerConfig.HANDLER.load();
 
-        toggleEnabledKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        KeyBinding.Category keybindCategory = KeyBinding.Category.create(
+                Identifier.of("breedtimer", "breedtimer")
+        );
+
+        toggleEnabledKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.breedtimer.toggleEnabled",
-                InputConstants.Type.KEYSYM,
+                InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_N,
-                KEYBIND_CATEGORY
+                keybindCategory
         ));
 
-        toggleCompactKey = KeyMappingHelper.registerKeyMapping(new KeyMapping(
+        toggleCompactKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.breedtimer.toggleCompact",
-                InputConstants.Type.KEYSYM,
+                InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_B,
-                KEYBIND_CATEGORY
+                keybindCategory
         ));
 
         HudElementRegistry.addLast(
-                Identifier.fromNamespaceAndPath("breedtimer", "compact_hud"),
-                BreedTimerHud::extractRenderState
+                Identifier.of("breedtimer", "compact_hud"),
+                BreedTimerHud::render
         );
 
         ClientTickEvents.END_CLIENT_TICK.register(this::onClientTick);
 
-        LevelRenderEvents.COLLECT_SUBMITS.register(TurtleEggRenderer::render);
+        WorldRenderEvents.AFTER_ENTITIES.register(TurtleEggRenderer::render);
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
             String worldId = getWorldId(handler);
@@ -78,27 +79,25 @@ public class BreedTimerClient implements ClientModInitializer {
         });
     }
 
-    private String getWorldId(ClientPacketListener handler) {
-        var serverData = handler.getServerData();
-        if (serverData != null) return sanitize(serverData.ip);
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.getSingleplayerServer() != null)
-            return sanitize(mc.getSingleplayerServer().getWorldData().getLevelSettings().levelName());
-        return "unknown";
+    private String getWorldId(ClientPlayNetworkHandler handler) {
+        var serverInfo = handler.getServerInfo();
+        if (serverInfo != null) return sanitize(serverInfo.address);
+        // Singleplayer: use "local" as a stable fallback
+        return "local";
     }
 
     private String sanitize(String name) {
         return name.replaceAll("[^a-zA-Z0-9._-]", "_");
     }
 
-    private void onClientTick(Minecraft mc) {
-        if (toggleEnabledKey.consumeClick()) {
+    private void onClientTick(MinecraftClient mc) {
+        if (toggleEnabledKey.wasPressed()) {
             BreedTimerConfig config = BreedTimerConfig.get();
             config.enabled = !config.enabled;
             BreedTimerConfig.HANDLER.save();
         }
 
-        if (toggleCompactKey.consumeClick()) {
+        if (toggleCompactKey.wasPressed()) {
             BreedTimerConfig config = BreedTimerConfig.get();
             config.compactMode = !config.compactMode;
             BreedTimerConfig.HANDLER.save();
@@ -107,26 +106,25 @@ public class BreedTimerClient implements ClientModInitializer {
         BreedTimerConfig config = BreedTimerConfig.get();
         if (!config.enabled) return;
 
-        Player player = mc.player;
-        Level level = mc.level;
-        if (player == null || level == null) return;
+        PlayerEntity player = mc.player;
+        World world = mc.world;
+        if (player == null || world == null) return;
 
-        if (config.showAnimals)   BreedCooldownHelper.tick(level, player, mc.isPaused());
-        if (config.showAnimals)   TurtleEggRenderer.tick(player, level, config);
-        if (config.showVillagers) VillagerCooldownHelper.tick(level, player, mc.isPaused());
+        if (config.showAnimals)   BreedCooldownHelper.tick(world, player, mc.isPaused());
+        if (config.showAnimals)   TurtleEggRenderer.tick(player, world, config);
+        if (config.showVillagers) VillagerCooldownHelper.tick(world, player, mc.isPaused());
 
         if (!config.playSound) return;
 
         if (config.showAnimals) {
-            // Animal ready sound
-            List<AnimalTimerInfo> animals = BreedCooldownHelper.getVisibleAnimals(player, level);
+            List<AnimalTimerInfo> animals = BreedCooldownHelper.getVisibleAnimals(player, world);
             Set<UUID> currentlyReady = new HashSet<>();
             for (AnimalTimerInfo info : animals) {
-                UUID uuid = info.animal().getUUID();
+                UUID uuid = info.animal().getUuid();
                 if (info.state() == AnimalState.READY) {
                     currentlyReady.add(uuid);
                     if (!previouslyReady.contains(uuid)) {
-                        player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
+                        player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
                     }
                 }
             }
@@ -135,15 +133,14 @@ public class BreedTimerClient implements ClientModInitializer {
         }
 
         if (config.showVillagers) {
-            // Villager ready sound (plays when villager comes back from cooldown)
-            List<VillagerCooldownHelper.VillagerTimerInfo> villagers = VillagerCooldownHelper.getVisibleVillagers(player, level);
+            List<VillagerCooldownHelper.VillagerTimerInfo> villagers = VillagerCooldownHelper.getVisibleVillagers(player, world);
             Set<UUID> currentlyVillagerReady = new HashSet<>();
             for (VillagerCooldownHelper.VillagerTimerInfo info : villagers) {
-                UUID uuid = info.villager().getUUID();
+                UUID uuid = info.villager().getUuid();
                 if (info.state() == VillagerCooldownHelper.VillagerState.READY) {
                     currentlyVillagerReady.add(uuid);
                     if (!previouslyWilling.contains(uuid)) {
-                        player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
+                        player.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 0.5f, 1.0f);
                     }
                 }
             }

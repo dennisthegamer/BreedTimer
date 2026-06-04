@@ -1,20 +1,20 @@
 package com.example.breedtimer.render;
 
 import com.example.breedtimer.config.BreedTimerConfig;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.state.level.CameraRenderState;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.TurtleEggBlock;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderContext;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.block.TurtleEggBlock;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,21 +24,21 @@ public class TurtleEggRenderer {
     // [x, y, z, hatch (0–2), egg_count (1–4)] – updated per tick, read per frame
     private static final List<int[]> eggCache = new ArrayList<>();
 
-    public static void tick(Player player, Level level, BreedTimerConfig config) {
+    public static void tick(PlayerEntity player, World world, BreedTimerConfig config) {
         eggCache.clear();
         int radius = config.scanRadius;
-        BlockPos origin = player.blockPosition();
-        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        BlockPos origin = player.getBlockPos();
+        BlockPos.Mutable mutable = new BlockPos.Mutable();
         for (int dx = -radius; dx <= radius; dx++) {
             for (int dz = -radius; dz <= radius; dz++) {
                 for (int dy = -5; dy <= 5; dy++) {
                     mutable.set(origin.getX() + dx, origin.getY() + dy, origin.getZ() + dz);
-                    BlockState state = level.getBlockState(mutable);
-                    if (!state.is(Blocks.TURTLE_EGG)) continue;
+                    BlockState state = world.getBlockState(mutable);
+                    if (!state.isOf(Blocks.TURTLE_EGG)) continue;
                     eggCache.add(new int[]{
                         mutable.getX(), mutable.getY(), mutable.getZ(),
-                        state.getValue(TurtleEggBlock.HATCH),
-                        state.getValue(TurtleEggBlock.EGGS)
+                        state.get(TurtleEggBlock.HATCH),
+                        state.get(TurtleEggBlock.EGGS)
                     });
                 }
             }
@@ -59,37 +59,37 @@ public class TurtleEggRenderer {
         return new int[]{fresh, cracking, hatching};
     }
 
-    /** Called from LevelRenderEvents.COLLECT_SUBMITS – renders floating labels above turtle egg blocks. */
-    public static void render(LevelRenderContext context) {
+    /** Called from WorldRenderEvents.AFTER_ENTITIES – renders floating labels above turtle egg blocks. */
+    public static void render(WorldRenderContext context) {
         if (eggCache.isEmpty()) return;
 
-        Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        PlayerEntity player = mc.player;
         if (player == null) return;
 
         BreedTimerConfig config = BreedTimerConfig.get();
         if (!config.enabled || config.compactMode || !config.showAnimals) return;
 
-        // Reuse the same CameraRenderState pattern as TimerLabelRenderer
-        CameraRenderState camera = context.levelState().cameraRenderState;
-        Vec3 camPos = camera.pos;
+        Camera camera = mc.gameRenderer.getCamera();
+        Vec3d camPos = camera.getCameraPos();
+        org.joml.Quaternionf orientation = camera.getRotation();
 
-        Vec3 eyePos = player.getEyePosition(1.0f);
-        Vec3 lookDir = player.getLookAngle().normalize();
+        Vec3d eyePos = player.getEyePos();
+        Vec3d lookDir = player.getRotationVec(1.0f).normalize();
         double fovCos = Math.cos(Math.toRadians(config.fovAngle / 2.0));
 
-        PoseStack poseStack = context.poseStack();
-        SubmitNodeCollector collector = context.submitNodeCollector();
+        MatrixStack matrices = context.matrices();
+        OrderedRenderCommandQueue queue = context.commandQueue();
 
         for (int[] egg : eggCache) {
             int bx = egg[0], by = egg[1], bz = egg[2];
             int hatch = egg[3], eggCount = egg[4];
 
-            Vec3 labelPos = new Vec3(bx + 0.5, by + 1.15, bz + 0.5);
+            Vec3d labelPos = new Vec3d(bx + 0.5, by + 1.15, bz + 0.5);
 
             // FOV check
-            Vec3 toBlock = labelPos.subtract(eyePos).normalize();
-            if (lookDir.dot(toBlock) < fovCos) continue;
+            Vec3d toBlock = labelPos.subtract(eyePos).normalize();
+            if (lookDir.dotProduct(toBlock) < fovCos) continue;
 
             // Distance + fade
             double dist = eyePos.distanceTo(labelPos);
@@ -114,36 +114,35 @@ public class TurtleEggRenderer {
                 default -> "breedtimer.turtle_egg.fresh";
             };
 
-            Component text = Component.translatable(key, eggCount);
+            Text text = Text.translatable(key, eggCount);
             int textAlpha = (int)(fade * 255.0f);
             int textColor = (textAlpha << 24) | labelColor;
             int bgAlpha   = (int)(config.backgroundOpacity * fade * 255.0f);
             int bgColor   = bgAlpha << 24;
 
-            poseStack.pushPose();
-            poseStack.translate(
+            matrices.push();
+            matrices.translate(
                 labelPos.x - camPos.x,
                 labelPos.y - camPos.y,
                 labelPos.z - camPos.z
             );
-            // Same billboard pattern as TimerLabelRenderer
-            poseStack.mulPose(camera.orientation);
-            poseStack.scale(0.025F, -0.025F, 0.025F);
+            matrices.multiply(orientation);
+            matrices.scale(0.025F, -0.025F, 0.025F);
 
-            collector.submitText(
-                poseStack,
-                -mc.font.width(text) / 2.0F,
+            queue.submitText(
+                matrices,
+                -mc.textRenderer.getWidth(text) / 2.0F,
                 0.0F,
-                text.getVisualOrderText(),
+                text.asOrderedText(),
                 false,
-                Font.DisplayMode.NORMAL,
-                0xF000F0, // LightTexture.FULL_BRIGHT
+                TextRenderer.TextLayerType.NORMAL,
+                0xF000F0,
                 textColor,
                 bgColor,
                 0
             );
 
-            poseStack.popPose();
+            matrices.pop();
         }
     }
 }

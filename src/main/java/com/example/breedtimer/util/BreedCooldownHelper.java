@@ -1,40 +1,40 @@
 package com.example.breedtimer.util;
 
 import com.example.breedtimer.config.BreedTimerConfig;
-import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.axolotl.Axolotl;
-import net.minecraft.world.entity.animal.bee.Bee;
-import net.minecraft.world.entity.animal.camel.Camel;
-import net.minecraft.world.entity.animal.chicken.Chicken;
-import net.minecraft.world.entity.animal.armadillo.Armadillo;
-import net.minecraft.world.entity.animal.cow.Cow;
-import net.minecraft.world.entity.animal.cow.MushroomCow;
-import net.minecraft.world.entity.animal.nautilus.Nautilus;
-import net.minecraft.world.entity.monster.hoglin.Hoglin;
-import net.minecraft.world.entity.monster.Strider;
-import net.minecraft.world.entity.animal.equine.Donkey;
-import net.minecraft.world.entity.animal.equine.Horse;
-import net.minecraft.world.entity.animal.equine.Llama;
-import net.minecraft.world.entity.animal.equine.Mule;
-import net.minecraft.world.entity.animal.feline.Cat;
-import net.minecraft.world.entity.animal.feline.Ocelot;
-import net.minecraft.world.entity.animal.fox.Fox;
-import net.minecraft.world.entity.animal.frog.Frog;
-import net.minecraft.world.entity.animal.goat.Goat;
-import net.minecraft.world.entity.animal.panda.Panda;
-import net.minecraft.world.entity.animal.pig.Pig;
-import net.minecraft.world.entity.animal.rabbit.Rabbit;
-import net.minecraft.world.entity.animal.sheep.Sheep;
-import net.minecraft.world.entity.animal.sniffer.Sniffer;
-import net.minecraft.world.entity.animal.turtle.Turtle;
-import net.minecraft.world.entity.animal.wolf.Wolf;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.mob.HoglinEntity;
+import net.minecraft.entity.passive.StriderEntity;
+import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.AxolotlEntity;
+import net.minecraft.entity.passive.BeeEntity;
+import net.minecraft.entity.passive.CamelEntity;
+import net.minecraft.entity.passive.ChickenEntity;
+import net.minecraft.entity.passive.ArmadilloEntity;
+import net.minecraft.entity.passive.CowEntity;
+import net.minecraft.entity.passive.MooshroomEntity;
+import net.minecraft.entity.passive.DonkeyEntity;
+import net.minecraft.entity.passive.HorseEntity;
+import net.minecraft.entity.passive.LlamaEntity;
+import net.minecraft.entity.passive.MuleEntity;
+import net.minecraft.entity.passive.CatEntity;
+import net.minecraft.entity.passive.OcelotEntity;
+import net.minecraft.entity.passive.FoxEntity;
+import net.minecraft.entity.passive.FrogEntity;
+import net.minecraft.entity.passive.GoatEntity;
+import net.minecraft.entity.passive.PandaEntity;
+import net.minecraft.entity.passive.PigEntity;
+import net.minecraft.entity.passive.RabbitEntity;
+import net.minecraft.entity.passive.SheepEntity;
+import net.minecraft.entity.passive.SnifferEntity;
+import net.minecraft.entity.passive.TurtleEntity;
+import net.minecraft.entity.passive.WolfEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.registry.Registries;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -58,14 +58,13 @@ public class BreedCooldownHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("BreedTimer");
 
-    public static final int BREED_COOLDOWN_TICKS = 6000; // 5 minutes
-    public static final int LOVE_MODE_TICKS = 600; // 30 seconds
-    public static final int BABY_GROW_TICKS = 24000; // 20 minutes
+    public static final int BREED_COOLDOWN_TICKS = 6000;
+    public static final int LOVE_MODE_TICKS = 600;
+    public static final int BABY_GROW_TICKS = 24000;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path SAVE_DIR = FabricLoader.getInstance().getConfigDir().resolve("breedtimer");
 
-    // Client-side tracking using UUID (persistent across sessions)
     private static final Map<UUID, Integer> cooldownMap = new HashMap<>();
     private static final Map<UUID, Integer> loveMap = new HashMap<>();
     private static final Map<UUID, Integer> babyTimerMap = new HashMap<>();
@@ -79,7 +78,7 @@ public class BreedCooldownHelper {
         BABY
     }
 
-    public record AnimalTimerInfo(Animal animal, AnimalState state, int remainingTicks, int color) {}
+    public record AnimalTimerInfo(AnimalEntity animal, AnimalState state, int remainingTicks, int color) {}
 
     public static void onWorldJoin(String worldId) {
         currentWorldId = worldId;
@@ -108,11 +107,9 @@ public class BreedCooldownHelper {
     private static void saveData() {
         try {
             Files.createDirectories(SAVE_DIR);
-            // Convert UUID keys to strings for JSON
             Map<String, Map<String, Integer>> data = new HashMap<>();
             data.put("cooldown", uuidMapToString(cooldownMap));
             data.put("baby", uuidMapToString(babyTimerMap));
-            // Don't save love mode — it's too short-lived to persist
             Files.writeString(getSaveFile(), GSON.toJson(data));
         } catch (IOException e) {
             LOGGER.error("BreedTimer data error", e);
@@ -150,70 +147,55 @@ public class BreedCooldownHelper {
         }
     }
 
-    /**
-     * Called from AnimalEventMixin when entity event byte 18 (hearts) is received.
-     * First event = entering love mode. Second event while in love = breeding happened.
-     */
-    public static void onLoveEvent(Animal animal) {
-        UUID uuid = animal.getUUID();
+    public static void onLoveEvent(AnimalEntity animal) {
+        UUID uuid = animal.getUuid();
 
         if (loveMap.containsKey(uuid)) {
-            // Already in love → this is the breeding event → start cooldown
             loveMap.remove(uuid);
             cooldownMap.put(uuid, BREED_COOLDOWN_TICKS);
 
-            // MC only sends event 18 for one parent — find the mate nearby
-            // and put it on cooldown too
-            Level level = animal.level();
-            AABB searchBox = animal.getBoundingBox().inflate(8);
-            List<Animal> nearby = level.getEntitiesOfClass(Animal.class, searchBox,
+            World world = animal.getEntityWorld();
+            Box searchBox = animal.getBoundingBox().expand(8);
+            List<AnimalEntity> nearby = world.getEntitiesByClass(AnimalEntity.class, searchBox,
                     a -> a != animal && a.getClass() == animal.getClass());
-            for (Animal mate : nearby) {
-                UUID mateUuid = mate.getUUID();
+            for (AnimalEntity mate : nearby) {
+                UUID mateUuid = mate.getUuid();
                 if (loveMap.containsKey(mateUuid)) {
                     loveMap.remove(mateUuid);
                     cooldownMap.put(mateUuid, BREED_COOLDOWN_TICKS);
-                    break; // only one mate
+                    break;
                 }
             }
         } else if (!cooldownMap.containsKey(uuid)) {
-            // Not in love, not on cooldown → entering love mode
             loveMap.put(uuid, LOVE_MODE_TICKS);
         }
     }
 
-    /**
-     * Called every client tick to update timers.
-     * @param paused true if the game is paused (singleplayer ESC menu)
-     */
-    public static void tick(Level level, Player player, boolean paused) {
+    public static void tick(World world, PlayerEntity player, boolean paused) {
         if (paused) return;
 
-        long currentGameTime = level.getGameTime();
+        long currentGameTime = world.getTime();
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
 
-        // Tick down love timers
         loveMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Tick down cooldowns
         cooldownMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Track baby growth
         BreedTimerConfig config = BreedTimerConfig.get();
         int radius = config.scanRadius;
-        AABB scanBox = player.getBoundingBox().inflate(radius);
-        List<Animal> animals = level.getEntitiesOfClass(Animal.class, scanBox);
+        Box scanBox = player.getBoundingBox().expand(radius);
+        List<AnimalEntity> animals = world.getEntitiesByClass(AnimalEntity.class, scanBox, a -> true);
 
-        for (Animal animal : animals) {
+        for (AnimalEntity animal : animals) {
             if (!isSupportedAnimal(animal)) continue;
-            UUID uuid = animal.getUUID();
+            UUID uuid = animal.getUuid();
 
             if (animal.isBaby()) {
                 if (!babyTimerMap.containsKey(uuid)) {
@@ -232,25 +214,25 @@ public class BreedCooldownHelper {
         }
     }
 
-    public static List<AnimalTimerInfo> getVisibleAnimals(Player player, Level level) {
+    public static List<AnimalTimerInfo> getVisibleAnimals(PlayerEntity player, World world) {
         BreedTimerConfig config = BreedTimerConfig.get();
         int radius = config.scanRadius;
 
-        AABB scanBox = player.getBoundingBox().inflate(radius);
-        List<Animal> animals = level.getEntitiesOfClass(Animal.class, scanBox);
+        Box scanBox = player.getBoundingBox().expand(radius);
+        List<AnimalEntity> animals = world.getEntitiesByClass(AnimalEntity.class, scanBox, a -> true);
         List<AnimalTimerInfo> result = new ArrayList<>();
 
-        Vec3 eyePos = player.getEyePosition(1.0f);
+        Vec3d eyePos = player.getEyePos();
 
-        for (Animal animal : animals) {
+        for (AnimalEntity animal : animals) {
             if (!isSupportedAnimal(animal)) continue;
             if (isOutOfFieldOfView(player, animal)) continue;
 
-            Vec3 animalPos = animal.position().add(0, animal.getBbHeight() / 2.0, 0);
+            Vec3d animalPos = new Vec3d(animal.getX(), animal.getY() + animal.getHeight() / 2.0, animal.getZ());
             double dist = eyePos.distanceTo(animalPos);
             if (dist > config.fadeEndDistance) continue;
 
-            if (!hasLineOfSight(level, eyePos, animalPos, player)) continue;
+            if (!hasLineOfSight(world, eyePos, animalPos, player)) continue;
 
             result.add(createTimerInfo(animal));
         }
@@ -258,28 +240,25 @@ public class BreedCooldownHelper {
         return result;
     }
 
-    private static boolean hasLineOfSight(Level level, Vec3 from, Vec3 to, Entity entity) {
-        ClipContext ctx = new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity);
-        HitResult hit = level.clip(ctx);
+    private static boolean hasLineOfSight(World world, Vec3d from, Vec3d to, Entity entity) {
+        RaycastContext ctx = new RaycastContext(from, to, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, entity);
+        HitResult hit = world.raycast(ctx);
         return hit.getType() == HitResult.Type.MISS ||
-                hit.getLocation().distanceToSqr(to) < 1.0;
+                hit.getPos().squaredDistanceTo(to) < 1.0;
     }
 
-    public static AnimalTimerInfo createTimerInfo(Animal animal) {
-        UUID uuid = animal.getUUID();
+    public static AnimalTimerInfo createTimerInfo(AnimalEntity animal) {
+        UUID uuid = animal.getUuid();
 
-        // Check love mode
         if (loveMap.containsKey(uuid)) {
             return new AnimalTimerInfo(animal, AnimalState.IN_LOVE, loveMap.get(uuid), 0xFF55FF);
         }
 
-        // Check baby
         if (animal.isBaby()) {
             int remaining = babyTimerMap.getOrDefault(uuid, BABY_GROW_TICKS);
             return new AnimalTimerInfo(animal, AnimalState.BABY, remaining, 0x55FFFF);
         }
 
-        // Check our tracked cooldown
         if (cooldownMap.containsKey(uuid)) {
             int remaining = cooldownMap.get(uuid);
             int color;
@@ -304,21 +283,23 @@ public class BreedCooldownHelper {
         return String.format("%d:%02d", minutes, seconds);
     }
 
-    public static boolean isOutOfFieldOfView(Player player, Entity entity) {
+    public static boolean isOutOfFieldOfView(PlayerEntity player, Entity entity) {
         BreedTimerConfig config = BreedTimerConfig.get();
         double fovCos = Math.cos(Math.toRadians(config.fovAngle / 2.0));
 
-        Vec3 eyePos = player.getEyePosition(1.0f);
-        Vec3 lookDir = player.getLookAngle().normalize();
-        Vec3 entityPos = entity.position().add(0, entity.getBbHeight() / 2.0, 0);
-        Vec3 toEntity = entityPos.subtract(eyePos).normalize();
+        Vec3d eyePos = player.getEyePos();
+        Vec3d lookDir = player.getRotationVec(1.0f).normalize();
+        Vec3d entityPos = new Vec3d(entity.getX(), entity.getY() + entity.getHeight() / 2.0, entity.getZ());
+        Vec3d toEntity = entityPos.subtract(eyePos).normalize();
 
-        return lookDir.dot(toEntity) < fovCos;
+        return lookDir.dotProduct(toEntity) < fovCos;
     }
 
-    public static float getDistanceFade(Player player, Entity entity) {
+    public static float getDistanceFade(PlayerEntity player, Entity entity) {
         BreedTimerConfig config = BreedTimerConfig.get();
-        double dist = player.position().distanceTo(entity.position());
+        Vec3d playerPos = new Vec3d(player.getX(), player.getY(), player.getZ());
+        Vec3d entityPos = new Vec3d(entity.getX(), entity.getY(), entity.getZ());
+        double dist = playerPos.distanceTo(entityPos);
 
         if (dist <= config.fadeStartDistance) return 1.0f;
         if (dist >= config.fadeEndDistance) return 0.0f;
@@ -328,31 +309,38 @@ public class BreedCooldownHelper {
     }
 
     public static boolean isSupportedAnimal(Entity entity) {
-        return entity instanceof Cow
-                || entity instanceof Sheep
-                || entity instanceof Pig
-                || entity instanceof Chicken
-                || entity instanceof Rabbit
-                || entity instanceof Horse
-                || entity instanceof Donkey
-                || entity instanceof Mule
-                || entity instanceof Llama
-                || entity instanceof Fox
-                || entity instanceof Wolf
-                || entity instanceof Cat
-                || entity instanceof Ocelot
-                || entity instanceof Panda
-                || entity instanceof Goat
-                || entity instanceof Camel
-                || entity instanceof Sniffer
-                || entity instanceof Bee
-                || entity instanceof Turtle
-                || entity instanceof Axolotl
-                || entity instanceof Frog
-                || entity instanceof Strider
-                || entity instanceof Hoglin
-                || entity instanceof MushroomCow
-                || entity instanceof Armadillo
-                || entity instanceof Nautilus;
+        return entity instanceof CowEntity
+                || entity instanceof SheepEntity
+                || entity instanceof PigEntity
+                || entity instanceof ChickenEntity
+                || entity instanceof RabbitEntity
+                || entity instanceof HorseEntity
+                || entity instanceof DonkeyEntity
+                || entity instanceof MuleEntity
+                || entity instanceof LlamaEntity
+                || entity instanceof FoxEntity
+                || entity instanceof WolfEntity
+                || entity instanceof CatEntity
+                || entity instanceof OcelotEntity
+                || entity instanceof PandaEntity
+                || entity instanceof GoatEntity
+                || entity instanceof CamelEntity
+                || entity instanceof SnifferEntity
+                || entity instanceof BeeEntity
+                || entity instanceof TurtleEntity
+                || entity instanceof AxolotlEntity
+                || entity instanceof FrogEntity
+                || entity instanceof StriderEntity
+                || entity instanceof HoglinEntity
+                || entity instanceof MooshroomEntity
+                || entity instanceof ArmadilloEntity
+                || isNautilus(entity);
+    }
+
+    // Nautilus was added in 1.21.11. Match it by registry id instead of the entity
+    // class so the mod still loads on 1.21.9 / 1.21.10, where that class does not exist.
+    private static boolean isNautilus(Entity entity) {
+        return Registries.ENTITY_TYPE.getId(entity.getType())
+                .getPath().equals("nautilus");
     }
 }

@@ -4,39 +4,39 @@ import com.example.breedtimer.config.BreedTimerConfig;
 import com.example.breedtimer.util.BreedCooldownHelper;
 import com.example.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
 import com.example.breedtimer.util.VillagerCooldownHelper;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.npc.villager.Villager;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.entity.passive.AnimalEntity;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.math.Box;
+import net.minecraft.world.World;
 
 import java.util.List;
 
 public class BreedTimerHud {
 
-    public static void extractRenderState(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+    public static void render(DrawContext graphics, RenderTickCounter tickCounter) {
         BreedTimerConfig config = BreedTimerConfig.get();
         if (!config.enabled || !config.compactMode) return;
 
-        Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
-        Level level = mc.level;
-        if (player == null || level == null) return;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        PlayerEntity player = mc.player;
+        World world = mc.world;
+        if (player == null || world == null) return;
 
-        AABB scanBox = player.getBoundingBox().inflate(config.scanRadius);
+        Box scanBox = player.getBoundingBox().expand(config.scanRadius);
 
         // ── Animal counts ────────────────────────────────────────────────────
         int ready = 0, cooldown = 0, babies = 0, inLove = 0;
         if (config.showAnimals) {
-            List<Animal> animals = level.getEntitiesOfClass(Animal.class, scanBox,
+            List<AnimalEntity> animals = world.getEntitiesByClass(AnimalEntity.class, scanBox,
                     BreedCooldownHelper::isSupportedAnimal);
-            for (Animal animal : animals) {
+            for (AnimalEntity animal : animals) {
                 if (BreedCooldownHelper.isOutOfFieldOfView(player, animal)) continue;
                 AnimalTimerInfo info = BreedCooldownHelper.createTimerInfo(animal);
                 switch (info.state()) {
@@ -50,10 +50,10 @@ public class BreedTimerHud {
 
         // ── Villager counts ──────────────────────────────────────────────────
         int vReady = 0, vCooldown = 0, vBabies = 0;
-        List<Villager> villagers = List.of();
+        List<VillagerEntity> villagers = List.of();
         if (config.showVillagers) {
-            villagers = level.getEntitiesOfClass(Villager.class, scanBox);
-            for (Villager villager : villagers) {
+            villagers = world.getEntitiesByClass(VillagerEntity.class, scanBox, v -> true);
+            for (VillagerEntity villager : villagers) {
                 if (BreedCooldownHelper.isOutOfFieldOfView(player, villager)) continue;
                 VillagerCooldownHelper.VillagerTimerInfo vInfo = VillagerCooldownHelper.createTimerInfo(villager);
                 switch (vInfo.state()) {
@@ -70,38 +70,38 @@ public class BreedTimerHud {
         int bgColor = ((int) (config.backgroundOpacity * 255) << 24);
 
         if (config.showAnimals) {
-            MutableComponent animalText = Component.empty()
-                    .append(Component.literal("Animals  ").withStyle(ChatFormatting.WHITE))
-                    .append(Component.literal(ready + " ready ").withStyle(ChatFormatting.GREEN))
-                    .append(Component.literal(cooldown + " cooldown ").withStyle(ChatFormatting.RED))
-                    .append(Component.literal(babies + " babies ").withStyle(ChatFormatting.AQUA))
-                    .append(Component.literal(inLove + " in love").withStyle(ChatFormatting.LIGHT_PURPLE));
-            graphics.fill(x - 2, currentY - 2, x + mc.font.width(animalText) + 2, currentY + mc.font.lineHeight + 2, bgColor);
-            graphics.text(mc.font, animalText, x, currentY, 0xFFFFFFFF, true);
-            currentY += mc.font.lineHeight + 4;
+            MutableText animalText = Text.empty()
+                    .append(Text.literal("Animals  ").formatted(Formatting.WHITE))
+                    .append(Text.literal(ready + " ready ").formatted(Formatting.GREEN))
+                    .append(Text.literal(cooldown + " cooldown ").formatted(Formatting.RED))
+                    .append(Text.literal(babies + " babies ").formatted(Formatting.AQUA))
+                    .append(Text.literal(inLove + " in love").formatted(Formatting.LIGHT_PURPLE));
+            graphics.fill(x - 2, currentY - 2, x + mc.textRenderer.getWidth(animalText) + 2, currentY + mc.textRenderer.fontHeight + 2, bgColor);
+            graphics.drawText(mc.textRenderer, animalText, x, currentY, 0xFFFFFFFF, true);
+            currentY += mc.textRenderer.fontHeight + 4;
 
             int[] eggCounts = TurtleEggRenderer.getEggCounts();
             int totalEggs = eggCounts[0] + eggCounts[1] + eggCounts[2];
             if (totalEggs > 0) {
-                MutableComponent eggText = Component.empty()
-                        .append(Component.literal("Turtle Eggs  ").withStyle(ChatFormatting.WHITE))
-                        .append(Component.literal(eggCounts[0] + " fresh ").withStyle(ChatFormatting.AQUA))
-                        .append(Component.literal(eggCounts[1] + " cracking ").withStyle(ChatFormatting.GOLD))
-                        .append(Component.literal(eggCounts[2] + " hatching").withStyle(ChatFormatting.GREEN));
-                graphics.fill(x - 2, currentY - 2, x + mc.font.width(eggText) + 2, currentY + mc.font.lineHeight + 2, bgColor);
-                graphics.text(mc.font, eggText, x, currentY, 0xFFFFFFFF, true);
-                currentY += mc.font.lineHeight + 4;
+                MutableText eggText = Text.empty()
+                        .append(Text.literal("Turtle Eggs  ").formatted(Formatting.WHITE))
+                        .append(Text.literal(eggCounts[0] + " fresh ").formatted(Formatting.AQUA))
+                        .append(Text.literal(eggCounts[1] + " cracking ").formatted(Formatting.GOLD))
+                        .append(Text.literal(eggCounts[2] + " hatching").formatted(Formatting.GREEN));
+                graphics.fill(x - 2, currentY - 2, x + mc.textRenderer.getWidth(eggText) + 2, currentY + mc.textRenderer.fontHeight + 2, bgColor);
+                graphics.drawText(mc.textRenderer, eggText, x, currentY, 0xFFFFFFFF, true);
+                currentY += mc.textRenderer.fontHeight + 4;
             }
         }
 
         if (config.showVillagers && !villagers.isEmpty()) {
-            MutableComponent villagerText = Component.empty()
-                    .append(Component.literal("Villagers  ").withStyle(ChatFormatting.WHITE))
-                    .append(Component.literal(vReady + " ready ").withStyle(ChatFormatting.GREEN))
-                    .append(Component.literal(vCooldown + " cooldown ").withStyle(ChatFormatting.RED))
-                    .append(Component.literal(vBabies + " babies").withStyle(ChatFormatting.AQUA));
-            graphics.fill(x - 2, currentY - 2, x + mc.font.width(villagerText) + 2, currentY + mc.font.lineHeight + 2, bgColor);
-            graphics.text(mc.font, villagerText, x, currentY, 0xFFFFFFFF, true);
+            MutableText villagerText = Text.empty()
+                    .append(Text.literal("Villagers  ").formatted(Formatting.WHITE))
+                    .append(Text.literal(vReady + " ready ").formatted(Formatting.GREEN))
+                    .append(Text.literal(vCooldown + " cooldown ").formatted(Formatting.RED))
+                    .append(Text.literal(vBabies + " babies").formatted(Formatting.AQUA));
+            graphics.fill(x - 2, currentY - 2, x + mc.textRenderer.getWidth(villagerText) + 2, currentY + mc.textRenderer.fontHeight + 2, bgColor);
+            graphics.drawText(mc.textRenderer, villagerText, x, currentY, 0xFFFFFFFF, true);
         }
     }
 }

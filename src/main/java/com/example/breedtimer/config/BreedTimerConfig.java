@@ -4,13 +4,13 @@ import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.resources.Identifier;
+import net.minecraft.util.Identifier;
 
 public class BreedTimerConfig {
 
     public static final ConfigClassHandler<BreedTimerConfig> HANDLER =
             ConfigClassHandler.createBuilder(BreedTimerConfig.class)
-                    .id(Identifier.fromNamespaceAndPath("breedtimer", "config"))
+                    .id(Identifier.of("breedtimer", "config"))
                     .serializer(config -> GsonConfigSerializerBuilder.create(config)
                             .setPath(FabricLoader.getInstance().getConfigDir()
                                     .resolve("breedtimer.json5"))

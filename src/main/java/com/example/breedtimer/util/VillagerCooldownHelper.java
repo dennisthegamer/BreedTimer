@@ -5,15 +5,15 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.npc.villager.AbstractVillager;
-import net.minecraft.world.entity.npc.villager.Villager;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.passive.MerchantEntity;
+import net.minecraft.entity.passive.VillagerEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,9 +31,9 @@ public class VillagerCooldownHelper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("BreedTimer");
 
-    public static final int WILLING_TIMEOUT_TICKS = 120; // 6 sec window — resets on each event 12
-    public static final int BREED_COOLDOWN_TICKS = 6000; // 5 minutes, same as animals
-    public static final int BABY_GROW_TICKS = 24_000;    // 20 minutes
+    public static final int WILLING_TIMEOUT_TICKS = 120;
+    public static final int BREED_COOLDOWN_TICKS = 6000;
+    public static final int BABY_GROW_TICKS = 24_000;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path SAVE_DIR = FabricLoader.getInstance().getConfigDir().resolve("breedtimer");
@@ -50,9 +50,7 @@ public class VillagerCooldownHelper {
         BABY
     }
 
-    public record VillagerTimerInfo(AbstractVillager villager, VillagerState state, int remainingTicks, int color) {}
-
-    // ── World lifecycle ──────────────────────────────────────────────────────
+    public record VillagerTimerInfo(MerchantEntity villager, VillagerState state, int remainingTicks, int color) {}
 
     public static void onWorldJoin(String worldId) {
         currentWorldId = worldId;
@@ -72,8 +70,6 @@ public class VillagerCooldownHelper {
         lastGameTime = -1;
     }
 
-    // ── Persistence ──────────────────────────────────────────────────────────
-
     private static Path getSaveFile() {
         return SAVE_DIR.resolve(currentWorldId + "_villagers.json");
     }
@@ -84,7 +80,6 @@ public class VillagerCooldownHelper {
             Map<String, Map<String, Integer>> data = new HashMap<>();
             data.put("cooldown", uuidMapToString(cooldownMap));
             data.put("baby", uuidMapToString(babyTimerMap));
-            // Don't save willingTimeoutMap — too short-lived (120 ticks = 6 sec)
             Files.writeString(getSaveFile(), GSON.toJson(data));
         } catch (IOException e) {
             LOGGER.error("BreedTimer villager data error", e);
@@ -120,25 +115,17 @@ public class VillagerCooldownHelper {
         }
     }
 
-    // ── Event handler ────────────────────────────────────────────────────────
-
-    // Called each time entity event 12 (heart particles) fires for a Villager.
-    // Resets the willing timeout window. When the window expires with no new events,
-    // tick() starts the breed cooldown — approximating the post-breed lock.
-    public static void onWillingEvent(AbstractVillager villager) {
-        willingTimeoutMap.put(villager.getUUID(), WILLING_TIMEOUT_TICKS);
+    public static void onWillingEvent(MerchantEntity villager) {
+        willingTimeoutMap.put(villager.getUuid(), WILLING_TIMEOUT_TICKS);
     }
 
-    // ── Per-tick update ──────────────────────────────────────────────────────
-
-    public static void tick(Level level, Player player, boolean paused) {
+    public static void tick(World world, PlayerEntity player, boolean paused) {
         if (paused) return;
 
-        long currentGameTime = level.getGameTime();
+        long currentGameTime = world.getTime();
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
 
-        // Willing timeout: when it expires, willing phase ended → start breed cooldown
         willingTimeoutMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             if (entry.getValue() <= 0) {
@@ -148,18 +135,16 @@ public class VillagerCooldownHelper {
             return false;
         });
 
-        // Breed cooldown countdown
         cooldownMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Baby growth tracking
         BreedTimerConfig config = BreedTimerConfig.get();
-        AABB scanBox = player.getBoundingBox().inflate(config.scanRadius);
-        List<Villager> villagers = level.getEntitiesOfClass(Villager.class, scanBox);
-        for (Villager villager : villagers) {
-            UUID uuid = villager.getUUID();
+        Box scanBox = player.getBoundingBox().expand(config.scanRadius);
+        List<VillagerEntity> villagers = world.getEntitiesByClass(VillagerEntity.class, scanBox, v -> true);
+        for (VillagerEntity villager : villagers) {
+            UUID uuid = villager.getUuid();
             if (villager.isBaby()) {
                 if (!babyTimerMap.containsKey(uuid)) {
                     babyTimerMap.put(uuid, BABY_GROW_TICKS);
@@ -174,11 +159,8 @@ public class VillagerCooldownHelper {
         }
     }
 
-    // ── State queries ────────────────────────────────────────────────────────
-
-    /** Baby always shown first. Adults show COOLDOWN or READY. Never returns null. */
-    public static VillagerTimerInfo createTimerInfo(AbstractVillager villager) {
-        UUID uuid = villager.getUUID();
+    public static VillagerTimerInfo createTimerInfo(MerchantEntity villager) {
+        UUID uuid = villager.getUuid();
 
         if (villager.isBaby()) {
             int remaining = babyTimerMap.getOrDefault(uuid, BABY_GROW_TICKS);
@@ -195,21 +177,21 @@ public class VillagerCooldownHelper {
         return new VillagerTimerInfo(villager, VillagerState.READY, 0, 0x55FF55);
     }
 
-    public static List<VillagerTimerInfo> getVisibleVillagers(Player player, Level level) {
+    public static List<VillagerTimerInfo> getVisibleVillagers(PlayerEntity player, World world) {
         BreedTimerConfig config = BreedTimerConfig.get();
-        AABB scanBox = player.getBoundingBox().inflate(config.scanRadius);
-        List<Villager> villagers = level.getEntitiesOfClass(Villager.class, scanBox);
+        Box scanBox = player.getBoundingBox().expand(config.scanRadius);
+        List<VillagerEntity> villagers = world.getEntitiesByClass(VillagerEntity.class, scanBox, v -> true);
         List<VillagerTimerInfo> result = new ArrayList<>();
 
-        Vec3 eyePos = player.getEyePosition(1.0f);
+        Vec3d eyePos = player.getEyePos();
 
-        for (Villager villager : villagers) {
+        for (VillagerEntity villager : villagers) {
             if (BreedCooldownHelper.isOutOfFieldOfView(player, villager)) continue;
 
-            Vec3 villagerPos = villager.position().add(0, villager.getBbHeight() / 2.0, 0);
+            Vec3d villagerPos = new Vec3d(villager.getX(), villager.getY() + villager.getHeight() / 2.0, villager.getZ());
             if (eyePos.distanceTo(villagerPos) > config.fadeEndDistance) continue;
 
-            if (!hasLineOfSight(level, eyePos, villagerPos, player)) continue;
+            if (!hasLineOfSight(world, eyePos, villagerPos, player)) continue;
 
             result.add(createTimerInfo(villager));
         }
@@ -217,9 +199,9 @@ public class VillagerCooldownHelper {
         return result;
     }
 
-    private static boolean hasLineOfSight(Level level, Vec3 from, Vec3 to, Entity entity) {
-        ClipContext ctx = new ClipContext(from, to, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, entity);
-        HitResult hit = level.clip(ctx);
-        return hit.getType() == HitResult.Type.MISS || hit.getLocation().distanceToSqr(to) < 1.0;
+    private static boolean hasLineOfSight(World world, Vec3d from, Vec3d to, Entity entity) {
+        RaycastContext ctx = new RaycastContext(from, to, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, entity);
+        HitResult hit = world.raycast(ctx);
+        return hit.getType() == HitResult.Type.MISS || hit.getPos().squaredDistanceTo(to) < 1.0;
     }
 }

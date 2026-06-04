@@ -1,29 +1,22 @@
 package com.example.breedtimer.mixin;
 
 import com.example.breedtimer.util.VillagerCooldownHelper;
-import net.minecraft.core.particles.ParticleOptions;
-import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.world.entity.npc.villager.AbstractVillager;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.entity.passive.VillagerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-@Mixin(AbstractVillager.class)
+@Mixin(VillagerEntity.class)
 public abstract class VillagerEventMixin {
 
-    // addParticlesAroundSelf is defined in AbstractVillager and called when
-    // Villager.handleEntityEvent receives byte 12 (heart particles = willing to breed).
-    // Targeting this method avoids injection into handleEntityEvent which is not
-    // declared in AbstractVillager and causes a Mixin resolution crash.
-    @Inject(method = "addParticlesAroundSelf", at = @At("HEAD"))
-    private void breedtimer$onVillagerParticles(ParticleOptions particle, CallbackInfo ci) {
-        if (particle != ParticleTypes.HEART) return;
-        AbstractVillager self = (AbstractVillager) (Object) this;
-        if (!(self instanceof Villager)) return; // skip WanderingTrader
-        if (self.isBaby()) return;               // skip baby birth event
-        if (!self.level().isClientSide()) return;
+    // handleStatus byte 12 = heart particles (willing to breed).
+    @Inject(method = "handleStatus", at = @At("HEAD"))
+    private void breedtimer$onVillagerStatus(byte status, CallbackInfo ci) {
+        if (status != 12) return;
+        VillagerEntity self = (VillagerEntity) (Object) this;
+        if (self.isBaby()) return;
+        if (!self.getEntityWorld().isClient()) return;
         VillagerCooldownHelper.onWillingEvent(self);
     }
 }
