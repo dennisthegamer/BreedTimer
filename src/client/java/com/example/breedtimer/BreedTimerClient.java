@@ -38,7 +38,7 @@ public class BreedTimerClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        BreedTimerConfig.HANDLER.load();
+        BreedTimerConfig.load();
 
         KeyBinding.Category keybindCategory = KeyBinding.Category.create(
                 Identifier.of("breedtimer", "breedtimer")
@@ -94,13 +94,13 @@ public class BreedTimerClient implements ClientModInitializer {
         if (toggleEnabledKey.wasPressed()) {
             BreedTimerConfig config = BreedTimerConfig.get();
             config.enabled = !config.enabled;
-            BreedTimerConfig.HANDLER.save();
+            BreedTimerConfig.save();
         }
 
         if (toggleCompactKey.wasPressed()) {
             BreedTimerConfig config = BreedTimerConfig.get();
             config.compactMode = !config.compactMode;
-            BreedTimerConfig.HANDLER.save();
+            BreedTimerConfig.save();
         }
 
         BreedTimerConfig config = BreedTimerConfig.get();

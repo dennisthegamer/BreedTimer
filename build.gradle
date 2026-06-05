@@ -50,18 +50,23 @@ dependencies {
 	// was introduced in 0.5.x. Without this, older loaders that bundle 0.4.x crash.
 	modImplementation "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
 
-	// YACL for configuration UI
-	modImplementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
-
-	// ModMenu for config screen access
-	modImplementation "maven.modrinth:modmenu:${project.modmenu_version}"
+	// YACL and ModMenu are optional at runtime — compile-only so the jar doesn't force them
+	modCompileOnly "dev.isxander:yet-another-config-lib:${project.yacl_version}"
+	modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
 }
 
 processResources {
+	def mcDep = findProperty("minecraft_dep") ?: ">=1.21.10"
+	def loaderDep = findProperty("fabricloader_dep") ?: ">=0.17.0"
+
 	inputs.property "version", project.version
+	inputs.property "minecraft_dep", mcDep
+	inputs.property "fabricloader_dep", loaderDep
 
 	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version
+		expand "version": inputs.properties.version,
+		       "minecraft_dep": mcDep,
+		       "fabricloader_dep": loaderDep
 	}
 }
 
