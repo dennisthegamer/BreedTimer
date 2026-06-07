@@ -15,13 +15,13 @@
   },
   "mixins": ["breedtimer.mixins.json"],
   "depends": {
-    "fabricloader": ">=0.16.9",
+    "fabricloader": "${fabricloader_dep}",
     "fabric-api": "*",
-    "minecraft": ">=1.21.9 <=1.21.11",
+    "minecraft": "${minecraft_dep}",
     "java": ">=21"
   },
   "suggests": {
-    "modmenu": ">=17.0.0",
+    "modmenu": ">=11.0.0",
     "yet_another_config_lib": ">=3.8.2"
   }
 }

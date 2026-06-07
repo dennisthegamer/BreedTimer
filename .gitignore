@@ -22,3 +22,9 @@ remappedSrc/
 /net/
 /gradle/
 /docs/
+0.15.0
+0.16.0
+0.17.0
+*.ps1
+/jar
+/Jars
