@@ -1,5 +1,5 @@
 plugins {
-	id 'net.fabricmc.fabric-loom' version '1.15-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
 }
 
@@ -15,12 +15,10 @@ repositories {
 		name = "YACL"
 		url = "https://maven.isxander.dev/releases"
 	}
-
 	maven {
 		name = "TerraformersMC"
 		url = "https://maven.terraformersmc.com/releases"
 	}
-
 	maven {
 		name = "Modrinth"
 		url = "https://api.modrinth.com/maven"
@@ -42,11 +40,7 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	// YACL for configuration UI
 	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}"
-
-	// ModMenu for config screen access
 	implementation "maven.modrinth:modmenu:${project.modmenu_version}"
 }
 
