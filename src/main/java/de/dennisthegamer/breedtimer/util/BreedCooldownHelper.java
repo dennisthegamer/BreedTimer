@@ -1,6 +1,6 @@
-package com.example.breedtimer.util;
+package de.dennisthegamer.breedtimer.util;
 
-import com.example.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.axolotl.Axolotl;
 import net.minecraft.world.entity.animal.bee.Bee;

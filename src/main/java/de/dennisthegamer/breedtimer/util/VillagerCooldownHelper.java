@@ -1,6 +1,6 @@
-package com.example.breedtimer.util;
+package de.dennisthegamer.breedtimer.util;
 
-import com.example.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;

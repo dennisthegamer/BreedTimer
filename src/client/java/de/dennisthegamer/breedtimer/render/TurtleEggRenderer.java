@@ -1,6 +1,6 @@
-package com.example.breedtimer.render;
+package de.dennisthegamer.breedtimer.render;
 
-import com.example.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderContext;
 import net.minecraft.client.Minecraft;
