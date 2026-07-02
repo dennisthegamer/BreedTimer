@@ -53,6 +53,9 @@ dependencies {
 	// YACL and ModMenu are optional at runtime — compile-only so the jar doesn't force them
 	modCompileOnly "dev.isxander:yet-another-config-lib:${project.yacl_version}"
 	modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
+
+	// ...but load YACL in the dev client so the config screen is testable
+	modLocalRuntime "dev.isxander:yet-another-config-lib:${project.yacl_version}"
 }
 
 processResources {
