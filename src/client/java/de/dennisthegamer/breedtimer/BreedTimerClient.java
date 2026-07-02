@@ -1,12 +1,12 @@
-package com.example.breedtimer;
+package de.dennisthegamer.breedtimer;
 
-import com.example.breedtimer.config.BreedTimerConfig;
-import com.example.breedtimer.render.BreedTimerHud;
-import com.example.breedtimer.render.TurtleEggRenderer;
-import com.example.breedtimer.util.BreedCooldownHelper;
-import com.example.breedtimer.util.BreedCooldownHelper.AnimalState;
-import com.example.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
-import com.example.breedtimer.util.VillagerCooldownHelper;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.render.BreedTimerHud;
+import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper.AnimalState;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
+import de.dennisthegamer.breedtimer.util.VillagerCooldownHelper;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;

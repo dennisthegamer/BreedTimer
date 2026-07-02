@@ -1,6 +1,6 @@
-package com.example.breedtimer.util;
+package de.dennisthegamer.breedtimer.util;
 
-import com.example.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.mob.HoglinEntity;
 import net.minecraft.entity.passive.StriderEntity;

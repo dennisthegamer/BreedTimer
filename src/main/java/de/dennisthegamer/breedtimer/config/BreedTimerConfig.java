@@ -1,4 +1,4 @@
-package com.example.breedtimer.config;
+package de.dennisthegamer.breedtimer.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

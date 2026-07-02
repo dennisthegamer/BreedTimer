@@ -1,6 +1,6 @@
-package com.example.breedtimer;
+package de.dennisthegamer.breedtimer;
 
-import com.example.breedtimer.config.BreedTimerConfigScreen;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfigScreen;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import net.fabricmc.loader.api.FabricLoader;

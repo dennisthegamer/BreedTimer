@@ -1,9 +1,9 @@
-package com.example.breedtimer.render;
+package de.dennisthegamer.breedtimer.render;
 
-import com.example.breedtimer.config.BreedTimerConfig;
-import com.example.breedtimer.util.BreedCooldownHelper;
-import com.example.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
-import com.example.breedtimer.util.VillagerCooldownHelper;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
+import de.dennisthegamer.breedtimer.util.VillagerCooldownHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;

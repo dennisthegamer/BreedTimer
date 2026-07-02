@@ -1,8 +1,8 @@
-package com.example.breedtimer.mixin;
+package de.dennisthegamer.breedtimer.mixin;
 
-import com.example.breedtimer.config.BreedTimerConfig;
-import com.example.breedtimer.render.TimerLabelRenderer;
-import com.example.breedtimer.util.BreedCooldownHelper;
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
+import de.dennisthegamer.breedtimer.render.TimerLabelRenderer;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.EntityRenderer;
