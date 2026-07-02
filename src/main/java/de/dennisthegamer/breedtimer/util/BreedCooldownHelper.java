@@ -50,8 +50,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class BreedCooldownHelper {
@@ -184,35 +186,40 @@ public class BreedCooldownHelper {
 
     /**
      * Called every client tick to update timers.
+     * Timers only count down for entities that are currently loaded — unloaded
+     * entities don't tick server-side, so their real cooldowns pause too.
      * @param paused true if the game is paused (singleplayer ESC menu)
+     * @param loadedEntities all entities currently loaded on the client
      */
-    public static void tick(Level level, Player player, boolean paused) {
+    public static void tick(Level level, boolean paused, List<Entity> loadedEntities) {
         if (paused) return;
 
         long currentGameTime = level.getGameTime();
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
 
-        // Tick down love timers
+        Set<UUID> loadedUuids = new HashSet<>();
+        for (Entity entity : loadedEntities) {
+            loadedUuids.add(entity.getUUID());
+        }
+
+        // Tick down love timers (paused while the entity is unloaded)
         loveMap.entrySet().removeIf(entry -> {
+            if (!loadedUuids.contains(entry.getKey())) return false;
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Tick down cooldowns
+        // Tick down cooldowns (paused while the entity is unloaded)
         cooldownMap.entrySet().removeIf(entry -> {
+            if (!loadedUuids.contains(entry.getKey())) return false;
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Track baby growth
-        BreedTimerConfig config = BreedTimerConfig.get();
-        int radius = config.scanRadius;
-        AABB scanBox = player.getBoundingBox().inflate(radius);
-        List<Animal> animals = level.getEntitiesOfClass(Animal.class, scanBox);
-
-        for (Animal animal : animals) {
-            if (!isSupportedAnimal(animal)) continue;
+        // Track baby growth for all loaded animals
+        for (Entity entity : loadedEntities) {
+            if (!(entity instanceof Animal animal) || !isSupportedAnimal(animal)) continue;
             UUID uuid = animal.getUUID();
 
             if (animal.isBaby()) {

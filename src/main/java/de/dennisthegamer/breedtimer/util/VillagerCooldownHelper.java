@@ -23,8 +23,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class VillagerCooldownHelper {
@@ -131,12 +133,24 @@ public class VillagerCooldownHelper {
 
     // ── Per-tick update ──────────────────────────────────────────────────────
 
-    public static void tick(Level level, Player player, boolean paused) {
+    /**
+     * Cooldown and baby timers only count down for entities that are currently
+     * loaded — unloaded entities don't tick server-side, so their real cooldowns
+     * pause too. The willing timeout is a client-side detection window and keeps
+     * ticking regardless of load state.
+     * @param loadedEntities all entities currently loaded on the client
+     */
+    public static void tick(Level level, boolean paused, List<Entity> loadedEntities) {
         if (paused) return;
 
         long currentGameTime = level.getGameTime();
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
+
+        Set<UUID> loadedUuids = new HashSet<>();
+        for (Entity entity : loadedEntities) {
+            loadedUuids.add(entity.getUUID());
+        }
 
         // Willing timeout: when it expires, willing phase ended → start breed cooldown
         willingTimeoutMap.entrySet().removeIf(entry -> {
@@ -148,17 +162,16 @@ public class VillagerCooldownHelper {
             return false;
         });
 
-        // Breed cooldown countdown
+        // Breed cooldown countdown (paused while the entity is unloaded)
         cooldownMap.entrySet().removeIf(entry -> {
+            if (!loadedUuids.contains(entry.getKey())) return false;
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        // Baby growth tracking
-        BreedTimerConfig config = BreedTimerConfig.get();
-        AABB scanBox = player.getBoundingBox().inflate(config.scanRadius);
-        List<Villager> villagers = level.getEntitiesOfClass(Villager.class, scanBox);
-        for (Villager villager : villagers) {
+        // Baby growth tracking for all loaded villagers
+        for (Entity entity : loadedEntities) {
+            if (!(entity instanceof Villager villager)) continue;
             UUID uuid = villager.getUUID();
             if (villager.isBaby()) {
                 if (!babyTimerMap.containsKey(uuid)) {

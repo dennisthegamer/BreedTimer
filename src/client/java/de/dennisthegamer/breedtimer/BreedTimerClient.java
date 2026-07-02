@@ -16,13 +16,16 @@ import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -111,9 +114,18 @@ public class BreedTimerClient implements ClientModInitializer {
         Level level = mc.level;
         if (player == null || level == null) return;
 
-        if (config.showAnimals)   BreedCooldownHelper.tick(level, player, mc.isPaused());
+        // Collect all client-loaded entities so the helpers can pause timers
+        // for entities that are currently unloaded
+        List<Entity> loadedEntities = new ArrayList<>();
+        if (level instanceof ClientLevel clientLevel) {
+            for (Entity entity : clientLevel.entitiesForRendering()) {
+                loadedEntities.add(entity);
+            }
+        }
+
+        if (config.showAnimals)   BreedCooldownHelper.tick(level, mc.isPaused(), loadedEntities);
         if (config.showAnimals)   TurtleEggRenderer.tick(player, level, config);
-        if (config.showVillagers) VillagerCooldownHelper.tick(level, player, mc.isPaused());
+        if (config.showVillagers) VillagerCooldownHelper.tick(level, mc.isPaused(), loadedEntities);
 
         if (!config.playSound) return;
 
