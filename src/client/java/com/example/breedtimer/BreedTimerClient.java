@@ -17,12 +17,15 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.Identifier;
 import net.minecraft.world.World;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -110,9 +113,18 @@ public class BreedTimerClient implements ClientModInitializer {
         World world = mc.world;
         if (player == null || world == null) return;
 
-        if (config.showAnimals)   BreedCooldownHelper.tick(world, player, mc.isPaused());
+        // Collect all client-loaded entities so the helpers can pause timers
+        // for entities that are currently unloaded
+        List<Entity> loadedEntities = new ArrayList<>();
+        if (world instanceof ClientWorld clientWorld) {
+            for (Entity entity : clientWorld.getEntities()) {
+                loadedEntities.add(entity);
+            }
+        }
+
+        if (config.showAnimals)   BreedCooldownHelper.tick(world, mc.isPaused(), loadedEntities);
         if (config.showAnimals)   TurtleEggRenderer.tick(player, world, config);
-        if (config.showVillagers) VillagerCooldownHelper.tick(world, player, mc.isPaused());
+        if (config.showVillagers) VillagerCooldownHelper.tick(world, mc.isPaused(), loadedEntities);
 
         if (!config.playSound) return;
 

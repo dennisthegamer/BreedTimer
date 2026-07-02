@@ -50,8 +50,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public class BreedCooldownHelper {
@@ -171,30 +173,42 @@ public class BreedCooldownHelper {
         }
     }
 
-    public static void tick(World world, PlayerEntity player, boolean paused) {
+    /**
+     * Called every client tick to update timers.
+     * Timers only count down for entities that are currently loaded — unloaded
+     * entities don't tick server-side, so their real cooldowns pause too.
+     * @param paused true if the game is paused (singleplayer ESC menu)
+     * @param loadedEntities all entities currently loaded on the client
+     */
+    public static void tick(World world, boolean paused, List<Entity> loadedEntities) {
         if (paused) return;
 
         long currentGameTime = world.getTime();
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
 
+        Set<UUID> loadedUuids = new HashSet<>();
+        for (Entity entity : loadedEntities) {
+            loadedUuids.add(entity.getUuid());
+        }
+
+        // Tick down love timers (paused while the entity is unloaded)
         loveMap.entrySet().removeIf(entry -> {
+            if (!loadedUuids.contains(entry.getKey())) return false;
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
+        // Tick down cooldowns (paused while the entity is unloaded)
         cooldownMap.entrySet().removeIf(entry -> {
+            if (!loadedUuids.contains(entry.getKey())) return false;
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
 
-        BreedTimerConfig config = BreedTimerConfig.get();
-        int radius = config.scanRadius;
-        Box scanBox = player.getBoundingBox().expand(radius);
-        List<AnimalEntity> animals = world.getEntitiesByClass(AnimalEntity.class, scanBox, a -> true);
-
-        for (AnimalEntity animal : animals) {
-            if (!isSupportedAnimal(animal)) continue;
+        // Track baby growth for all loaded animals
+        for (Entity entity : loadedEntities) {
+            if (!(entity instanceof AnimalEntity animal) || !isSupportedAnimal(animal)) continue;
             UUID uuid = animal.getUuid();
 
             if (animal.isBaby()) {

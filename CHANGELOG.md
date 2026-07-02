@@ -5,6 +5,18 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-02
+
+### Fixed
+- **Timers no longer count down while entities are unloaded** — Breed cooldown and love-mode timers previously kept counting based on global game time, even when the animal or villager was unloaded (e.g. after walking away or switching dimensions). Since unloaded entities don't tick server-side, their real cooldowns pause — the mod now pauses its timers too whenever the entity is not loaded on the client, so timers stay accurate when you step away and come back. (Thanks for the report!)
+
+### Changed
+- **Baby growth timers now track all loaded entities** — Baby timers previously only counted down while the baby was within the configured scan radius; they now count down for every loaded baby animal/villager, matching actual server-side growth more closely.
+
+> **Note:** The client can only see entities within the server's entity tracking range. If an entity ticks on the server while just outside that range, the displayed timer may show slightly more remaining time than the real cooldown — it will never falsely show "Ready" anymore, though.
+
+---
+
 ## [1.1.1] - 2026-05-11
 
 ### Added
