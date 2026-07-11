@@ -1,0 +1,68 @@
+plugins {
+	id 'net.neoforged.moddev'
+}
+
+version = "${project.mod_version}+mc${project.minecraft_version}"
+group = project.maven_group
+
+base {
+	archivesName = "${project.archives_base_name}-neoforge"
+}
+
+java {
+	toolchain.languageVersion = JavaLanguageVersion.of(25)
+}
+
+repositories {
+	mavenCentral()
+	maven {
+		name = 'NeoForged'
+		url = 'https://maven.neoforged.net/releases/'
+	}
+	maven {
+		name = 'YACL'
+		url = 'https://maven.isxander.dev/releases'
+	}
+}
+
+sourceSets.main {
+	java.srcDir rootProject.file('common/src/main/java')
+	resources.srcDir rootProject.file('common/src/main/resources')
+}
+
+neoForge {
+	version = project.neoforge_version
+
+	runs {
+		client {
+			client()
+			gameDirectory = file('run')
+		}
+	}
+
+	mods {
+		register(project.mod_id) {
+			sourceSet sourceSets.main
+		}
+	}
+}
+
+dependencies {
+	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}-neoforge"
+}
+
+processResources {
+	inputs.property "version", project.version
+
+	filesMatching("META-INF/neoforge.mods.toml") {
+		expand "version": inputs.properties.version
+	}
+}
+
+jar {
+	inputs.property "archivesName", project.base.archivesName
+
+	from(rootProject.file("LICENSE")) {
+		rename { "${it}_${inputs.properties.archivesName}" }
+	}
+}

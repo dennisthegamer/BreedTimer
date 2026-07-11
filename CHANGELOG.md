@@ -5,6 +5,14 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-11
+
+### Added
+- **NeoForge support** — BreedTimer now runs on both Fabric and NeoForge. Each release ships two jars built from one shared codebase: `breedtimer-fabric-…` and `breedtimer-neoforge-…`. On NeoForge, the config screen is reachable via the native mod list entry (no ModMenu needed).
+
+### Changed
+- Restructured the project into `common/` (shared code and mixins) plus `fabric/` and `neoforge/` loader subprojects. No gameplay changes.
+
 ## [1.2.0] - 2026-07-02
 
 ### Fixed

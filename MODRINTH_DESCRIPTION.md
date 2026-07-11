@@ -2,7 +2,7 @@
 
 **Always know when your animals and villagers are ready to breed!**
 
-This lightweight client-side Fabric mod displays floating timers above breedable animals and villagers, showing exactly when they can breed again and how long babies take to grow up.
+This lightweight client-side mod for Fabric and NeoForge displays floating timers above breedable animals and villagers, showing exactly when they can breed again and how long babies take to grow up.
 
 ## Features
 
@@ -72,11 +72,11 @@ Configure everything in-game via ModMenu:
 
 ## Requirements
 
-- **Minecraft**: 26.1+
-- **Fabric Loader**: 0.18.4 or higher
-- **Fabric API**: Required
+- **Minecraft**: 26.1.x
+- **Mod Loader**: Fabric (0.18.4+, requires Fabric API) or NeoForge
 - **Java**: 25 or higher
-- **ModMenu** + **YACL**: Optional (for in-game config screen)
+- **YACL**: Optional (for in-game config screen)
+- **ModMenu** (Fabric only): Optional (for in-game config screen)
 
 ## Perfect For
 
