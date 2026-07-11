@@ -1,0 +1,70 @@
+plugins {
+	id 'com.gradleup.shadow' version "${shadow_version}"
+}
+
+architectury {
+	platformSetupLoomIde()
+	fabric()
+}
+
+configurations {
+	common
+	shadowCommon
+	compileClasspath.extendsFrom common
+	runtimeClasspath.extendsFrom common
+	developmentFabric.extendsFrom common
+}
+
+dependencies {
+	modImplementation "net.fabricmc:fabric-loader:${rootProject.loader_version}"
+	modImplementation "net.fabricmc.fabric-api:fabric-api:${rootProject.fabric_api_version}"
+
+	// MixinExtras 0.5.x explicitly: EXPRESSION injection point (used by Fabric API 0.140+)
+	// was introduced in 0.5.x. Without this, older loaders that bundle 0.4.x crash.
+	modImplementation "io.github.llamalad7:mixinextras-fabric:${rootProject.mixinextras_version}"
+
+	// YACL and ModMenu are optional at runtime — compile-only so the jar doesn't force them
+	modCompileOnly "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-fabric"
+	modCompileOnly "maven.modrinth:modmenu:${rootProject.modmenu_version}"
+
+	// ...but load YACL in the dev client so the config screen is testable
+	modLocalRuntime "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-fabric"
+
+	common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
+	shadowCommon(project(path: ':common', configuration: 'transformProductionFabric')) { transitive = false }
+}
+
+processResources {
+	def mcDep = findProperty("minecraft_dep") ?: ">=1.21.10"
+	def loaderDep = findProperty("fabricloader_dep") ?: ">=0.17.0"
+
+	inputs.property "version", project.version
+	inputs.property "minecraft_dep", mcDep
+	inputs.property "fabricloader_dep", loaderDep
+
+	filesMatching("fabric.mod.json") {
+		expand "version": inputs.properties.version,
+		       "minecraft_dep": mcDep,
+		       "fabricloader_dep": loaderDep
+	}
+}
+
+shadowJar {
+	exclude 'architectury.common.json'
+	configurations = [project.configurations.shadowCommon]
+	archiveClassifier = 'dev-shadow'
+}
+
+remapJar {
+	input.set shadowJar.archiveFile
+	dependsOn shadowJar
+	archiveClassifier = null
+}
+
+jar {
+	inputs.property "archivesName", project.base.archivesName
+
+	from(rootProject.file("LICENSE")) {
+		rename { "${it}_${inputs.properties.archivesName}" }
+	}
+}

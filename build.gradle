@@ -1,113 +1,62 @@
 plugins {
-	id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
-	id 'maven-publish'
+	id 'architectury-plugin' version "${arch_plugin_version}"
+	id 'dev.architectury.loom-remap' version "${arch_loom_version}" apply false
 }
 
-version = "${project.mod_version}+mc${project.minecraft_version}"
-group = project.maven_group
-
-base {
-	archivesName = project.archives_base_name
+architectury {
+	minecraft = project.minecraft_version
 }
 
-repositories {
-	mavenCentral()
+subprojects {
+	apply plugin: 'dev.architectury.loom-remap'
 
-	maven {
-		name = "YACL"
-		url = "https://maven.isxander.dev/releases"
-	}
-
-	maven {
-		name = "TerraformersMC"
-		url = "https://maven.terraformersmc.com/releases"
-	}
-
-	maven {
-		name = "Modrinth"
-		url = "https://api.modrinth.com/maven"
+	dependencies {
+		minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+		mappings loom.officialMojangMappings()
 	}
 }
 
-loom {
-	splitEnvironmentSourceSets()
+allprojects {
+	apply plugin: 'java'
+	apply plugin: 'architectury-plugin'
 
-	mods {
-		"breedtimer" {
-			sourceSet sourceSets.main
-			sourceSet sourceSets.client
-		}
-	}
-}
+	version = "${rootProject.mod_version}+mc${rootProject.minecraft_version}"
+	group = rootProject.maven_group
 
-dependencies {
-	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
-
-	// MixinExtras 0.5.x explicitly: EXPRESSION injection point (used by Fabric API 0.140+)
-	// was introduced in 0.5.x. Without this, older loaders that bundle 0.4.x crash.
-	modImplementation "io.github.llamalad7:mixinextras-fabric:${project.mixinextras_version}"
-
-	// YACL and ModMenu are optional at runtime — compile-only so the jar doesn't force them
-	modCompileOnly "dev.isxander:yet-another-config-lib:${project.yacl_version}"
-	modCompileOnly "maven.modrinth:modmenu:${project.modmenu_version}"
-
-	// ...but load YACL in the dev client so the config screen is testable
-	modLocalRuntime "dev.isxander:yet-another-config-lib:${project.yacl_version}"
-}
-
-processResources {
-	def mcDep = findProperty("minecraft_dep") ?: ">=1.21.10"
-	def loaderDep = findProperty("fabricloader_dep") ?: ">=0.17.0"
-
-	inputs.property "version", project.version
-	inputs.property "minecraft_dep", mcDep
-	inputs.property "fabricloader_dep", loaderDep
-
-	filesMatching("fabric.mod.json") {
-		expand "version": inputs.properties.version,
-		       "minecraft_dep": mcDep,
-		       "fabricloader_dep": loaderDep
-	}
-}
-
-tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
-}
-
-// Loom 1.14 adds --sun-misc-unsafe-memory-access=allow which requires Java 23+.
-// Remove it so the dev client runs under Java 21.
-afterEvaluate {
-	tasks.withType(JavaExec).configureEach {
-		jvmArgs = jvmArgs.findAll { !it.startsWith("--sun-misc-unsafe-memory-access") }
-	}
-}
-
-java {
-	withSourcesJar()
-
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
-}
-
-jar {
-	inputs.property "archivesName", project.base.archivesName
-
-	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}" }
-	}
-}
-
-publishing {
-	publications {
-		create("mavenJava", MavenPublication) {
-			artifactId = project.archives_base_name
-			from components.java
-		}
+	base {
+		archivesName = "${rootProject.archives_base_name}-${project.name}"
 	}
 
 	repositories {
+		mavenCentral()
+		maven {
+			name = 'YACL'
+			url = 'https://maven.isxander.dev/releases'
+		}
+		maven {
+			name = 'TerraformersMC'
+			url = 'https://maven.terraformersmc.com/releases'
+		}
+		maven {
+			name = 'Modrinth'
+			url = 'https://api.modrinth.com/maven'
+		}
+	}
+
+	tasks.withType(JavaCompile).configureEach {
+		options.release = 21
+	}
+
+	java {
+		sourceCompatibility = JavaVersion.VERSION_21
+		targetCompatibility = JavaVersion.VERSION_21
+	}
+
+	// Loom adds --sun-misc-unsafe-memory-access=allow which requires Java 23+.
+	// Remove it so the dev client runs under Java 21.
+	afterEvaluate {
+		tasks.withType(JavaExec).configureEach {
+			jvmArgs = jvmArgs.findAll { !it.startsWith("--sun-misc-unsafe-memory-access") }
+		}
 	}
 }

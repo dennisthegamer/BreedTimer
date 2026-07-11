@@ -4,7 +4,18 @@ pluginManagement {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}
+		maven {
+			name = 'Architectury'
+			url = 'https://maven.architectury.dev/'
+		}
+		maven {
+			name = 'NeoForged'
+			url = 'https://maven.neoforged.net/releases/'
+		}
 		mavenCentral()
 		gradlePluginPortal()
 	}
 }
+
+rootProject.name = 'BreedTimer'
+include 'common', 'fabric', 'neoforge'
