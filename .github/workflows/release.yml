@@ -1,12 +1,12 @@
 # Automatically create GitHub releases with build artifacts
-# for every push to the mc26.1 branch
+# for every push to the mc26.2 branch
 
 name: Release
 
 on:
   push:
     branches:
-      - mc26.1
+      - mc26.2
 
 jobs:
   build:
@@ -17,6 +17,7 @@ jobs:
       minecraft_version: ${{ steps.version.outputs.minecraft_version }}
       fabric_api_version: ${{ steps.version.outputs.fabric_api_version }}
       loader_version: ${{ steps.version.outputs.loader_version }}
+      neoforge_version: ${{ steps.version.outputs.neoforge_version }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -28,11 +29,13 @@ jobs:
           MC_VERSION=$(grep '^minecraft_version=' gradle.properties | cut -d'=' -f2)
           FABRIC_VERSION=$(grep '^fabric_api_version=' gradle.properties | cut -d'=' -f2)
           LOADER_VERSION=$(grep '^loader_version=' gradle.properties | cut -d'=' -f2)
+          NEOFORGE_VERSION=$(grep '^neoforge_version=' gradle.properties | cut -d'=' -f2)
           echo "mod_version=$VERSION" >> $GITHUB_OUTPUT
           echo "minecraft_version=$MC_VERSION" >> $GITHUB_OUTPUT
           echo "fabric_api_version=$FABRIC_VERSION" >> $GITHUB_OUTPUT
           echo "loader_version=$LOADER_VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted versions: mod=$VERSION, minecraft=$MC_VERSION, fabric=$FABRIC_VERSION, loader=$LOADER_VERSION"
+          echo "neoforge_version=$NEOFORGE_VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted versions: mod=$VERSION, minecraft=$MC_VERSION, fabric=$FABRIC_VERSION, loader=$LOADER_VERSION, neoforge=$NEOFORGE_VERSION"
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
@@ -53,7 +56,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: build-artifacts-${{ steps.version.outputs.mod_version }}
-          path: build/libs/
+          path: |
+            fabric/build/libs/
+            neoforge/build/libs/
           retention-days: 7
 
   release:
@@ -72,7 +77,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ needs.build.outputs.mod_version }}
-          path: build/libs/
+          path: .
 
       - name: Extract changelog for version
         id: changelog
@@ -119,14 +124,14 @@ jobs:
           ## Compatibility
 
           - **Minecraft:** ${{ needs.build.outputs.minecraft_version }}
-          - **Fabric Loader:** ${{ needs.build.outputs.loader_version }}+
-          - **Fabric API:** ${{ needs.build.outputs.fabric_api_version }}
+          - **Fabric Loader:** ${{ needs.build.outputs.loader_version }}+ with Fabric API ${{ needs.build.outputs.fabric_api_version }}
+          - **NeoForge:** ${{ needs.build.outputs.neoforge_version }}+
           - **Java:** 25+
 
           ## Build Artifacts
 
-          - `breedtimer-${{ needs.build.outputs.mod_version }}.jar` - Main mod file (download this)
-          - `breedtimer-${{ needs.build.outputs.mod_version }}-sources.jar` - Source code
+          - `breedtimer-fabric-${{ needs.build.outputs.mod_version }}+mc${{ needs.build.outputs.minecraft_version }}.jar` - Fabric version
+          - `breedtimer-neoforge-${{ needs.build.outputs.mod_version }}+mc${{ needs.build.outputs.minecraft_version }}.jar` - NeoForge version
 
           ## Recent Commits
 
@@ -134,7 +139,7 @@ jobs:
 
           ---
 
-          **Installation:** Download the main JAR file and place it in your mods folder along with Fabric API.
+          **Installation:** Download the JAR for your mod loader and place it in your mods folder. On Fabric, Fabric API is required.
 
           For detailed installation instructions, see the [README](https://github.com/dennisthegamer/BreedTimer/blob/mc26.1/README.md).
           RELEASE_BODY
@@ -149,4 +154,5 @@ jobs:
           prerelease: false
           body_path: release_body.md
           files: |
-            build/libs/breedtimer-*.jar
+            fabric/build/libs/breedtimer-fabric-*.jar
+            neoforge/build/libs/breedtimer-neoforge-*.jar

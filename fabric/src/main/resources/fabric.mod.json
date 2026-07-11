@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "breedtimer",
+  "version": "${version}",
+  "name": "BreedTimer",
+  "description": "Shows floating timers above breedable animals indicating when they can breed again.",
+  "authors": ["Dennis_thegamer"],
+  "contact": {},
+  "license": "MIT",
+  "icon": "assets/breedtimer/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["de.dennisthegamer.breedtimer.fabric.BreedTimerFabric"],
+    "modmenu": ["de.dennisthegamer.breedtimer.fabric.ModMenuIntegration"]
+  },
+  "mixins": ["breedtimer.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.2",
+    "fabric-api": "*",
+    "minecraft": "~26.2-",
+    "java": ">=25"
+   },
+  "suggests": {
+    "modmenu": ">=20.0.0",
+    "yet_another_config_lib": ">=3.9.4"
+  }
+}
