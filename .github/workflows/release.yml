@@ -1,12 +1,12 @@
 # Automatically create GitHub releases with build artifacts
-# for every push to the mc1.21.11 branch
+# for every push to the mc1.21.6-1.21.8 branch
 
 name: Release
 
 on:
   push:
     branches:
-      - mc1.21.11
+      - mc1.21.6-1.21.8
 
 jobs:
   build:
