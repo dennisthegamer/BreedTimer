@@ -3,8 +3,9 @@ package de.dennisthegamer.breedtimer.neoforge;
 import de.dennisthegamer.breedtimer.BreedTimerClient;
 import de.dennisthegamer.breedtimer.config.BreedTimerConfigScreen;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
+import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -14,6 +15,7 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 
@@ -29,14 +31,16 @@ public final class BreedTimerNeoForge {
         });
 
         modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAboveAll(
-                Identifier.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
+                ResourceLocation.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
                 BreedTimerHud::render));
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event ->
                 BreedTimerClient.onClientTick(Minecraft.getInstance()));
 
-        // Turtle egg labels are rendered via the shared LevelRendererSubmitMixin
-        // (no common level-render event exists across both loaders).
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterEntities.class, event ->
+                TurtleEggRenderer.render(event.getPoseStack(),
+                        Minecraft.getInstance().renderBuffers().bufferSource(),
+                        event.getCamera()));
 
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, event ->
                 BreedTimerClient.onWorldJoin(event.getPlayer().connection));
