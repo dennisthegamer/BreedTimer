@@ -5,11 +5,10 @@ import de.dennisthegamer.breedtimer.render.TimerLabelRenderer;
 import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.npc.Villager;
@@ -25,10 +24,9 @@ import java.util.List;
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity, S extends EntityRenderState> {
 
-    @Inject(method = "submit", at = @At("TAIL"))
-    private void breedtimer$onSubmit(S state, PoseStack matrices,
-                                      SubmitNodeCollector queue, CameraRenderState camera,
-                                      CallbackInfo ci) {
+    @Inject(method = "render", at = @At("TAIL"))
+    private void breedtimer$onRender(S state, PoseStack matrices, MultiBufferSource bufferSource,
+                                      int packedLight, CallbackInfo ci) {
         if (!(state instanceof LivingEntityRenderState livingState)) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -50,7 +48,8 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
             if (!nearby.isEmpty()) {
                 Animal closest = findClosest(nearby, statePos);
                 if (closest != null) {
-                    TimerLabelRenderer.renderLabel(state, closest, matrices, queue, camera);
+                    TimerLabelRenderer.renderLabel(closest, matrices, bufferSource,
+                            mc.gameRenderer.getMainCamera());
                     return;
                 }
             }
@@ -61,7 +60,8 @@ public abstract class EntityRendererMixin<T extends Entity, S extends EntityRend
             if (!nearbyVillagers.isEmpty()) {
                 Villager closest = findClosest(nearbyVillagers, statePos);
                 if (closest != null) {
-                    TimerLabelRenderer.renderVillagerLabel(state, closest, matrices, queue, camera);
+                    TimerLabelRenderer.renderVillagerLabel(closest, matrices, bufferSource,
+                            mc.gameRenderer.getMainCamera());
                 }
             }
         }
