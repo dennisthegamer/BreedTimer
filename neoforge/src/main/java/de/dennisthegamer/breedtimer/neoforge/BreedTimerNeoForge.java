@@ -37,10 +37,13 @@ public final class BreedTimerNeoForge {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event ->
                 BreedTimerClient.onClientTick(Minecraft.getInstance()));
 
-        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterEntities.class, event ->
+        NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, event -> {
+            if (event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
                 TurtleEggRenderer.render(event.getPoseStack(),
                         Minecraft.getInstance().renderBuffers().bufferSource(),
-                        event.getCamera()));
+                        event.getCamera());
+            }
+        });
 
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, event ->
                 BreedTimerClient.onWorldJoin(event.getPlayer().connection));
