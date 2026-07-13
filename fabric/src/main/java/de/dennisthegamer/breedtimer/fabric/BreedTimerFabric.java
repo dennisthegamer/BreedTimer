@@ -2,12 +2,13 @@ package de.dennisthegamer.breedtimer.fabric;
 
 import de.dennisthegamer.breedtimer.BreedTimerClient;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
+import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 
 public final class BreedTimerFabric implements ClientModInitializer {
 
@@ -18,15 +19,14 @@ public final class BreedTimerFabric implements ClientModInitializer {
         KeyBindingHelper.registerKeyBinding(BreedTimerClient.toggleEnabledKey);
         KeyBindingHelper.registerKeyBinding(BreedTimerClient.toggleCompactKey);
 
-        HudElementRegistry.addLast(
-                Identifier.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
-                BreedTimerHud::render
-        );
+        HudRenderCallback.EVENT.register(BreedTimerHud::render);
 
         ClientTickEvents.END_CLIENT_TICK.register(BreedTimerClient::onClientTick);
 
-        // Turtle egg labels are rendered via the shared LevelRendererSubmitMixin
-        // (no common level-render event exists across both loaders).
+        WorldRenderEvents.AFTER_ENTITIES.register(context -> {
+            if (context.matrixStack() == null || context.consumers() == null) return;
+            TurtleEggRenderer.render(context.matrixStack(), context.consumers(), context.camera());
+        });
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
                 BreedTimerClient.onWorldJoin(handler));
