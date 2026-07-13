@@ -16,7 +16,7 @@ A Minecraft mod for Fabric and NeoForge that displays floating timers above bree
 
 ## Compatibility
 
-- **Minecraft**: 1.21.2–1.21.5 (Fabric) / 1.21.3–1.21.5 (NeoForge)
+- **Minecraft**: 1.21–1.21.1 (Fabric and NeoForge)
 - **Mod Loader**: Fabric (0.17.0+, requires Fabric API) or NeoForge
 - **Java**: 21+
 - **YACL**: Optional (for config screen)

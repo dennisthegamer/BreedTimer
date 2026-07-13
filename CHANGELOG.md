@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.3.1] - 2026-07-13
 
 ### Added
-- **Backport to Minecraft 1.21.2–1.21.5** — same feature set as the newer releases, built against 1.21.5 with Fabric and NeoForge jars from one shared codebase. NeoForge requires 21.3+ (no stable NeoForge exists for 1.21.2; use Fabric there).
+- **Backport to Minecraft 1.21–1.21.1** — same feature set as the newer releases, built against 1.21.1 with Fabric and NeoForge jars from one shared codebase.
 
 ## [1.3.0] - 2026-07-11
 
