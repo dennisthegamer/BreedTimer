@@ -40,7 +40,7 @@ jobs:
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
 
-      - name: Setup JDK 21
+      - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           java-version: '25'
@@ -126,10 +126,10 @@ jobs:
 
           ## Compatibility
 
-          - **Minecraft:** ${{ needs.build.outputs.minecraft_version }}
+          - **Minecraft:** 1.21.6–1.21.8
           - **Fabric Loader:** ${{ needs.build.outputs.loader_version }}+ with Fabric API ${{ needs.build.outputs.fabric_api_version }}
           - **NeoForge:** ${{ needs.build.outputs.neoforge_version }}+
-          - **Java:** 25+
+          - **Java:** 21+
 
           ## Build Artifacts
 
