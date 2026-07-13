@@ -12,7 +12,7 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;

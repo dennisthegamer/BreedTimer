@@ -11,7 +11,6 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
-import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -32,9 +31,7 @@ public final class BreedTimerClient {
 
     public static final String MOD_ID = "breedtimer";
 
-    private static final KeyMapping.Category KEYBIND_CATEGORY = KeyMapping.Category.register(
-            Identifier.fromNamespaceAndPath(MOD_ID, "breedtimer")
-    );
+    private static final String KEYBIND_CATEGORY = "key.category.breedtimer.breedtimer";
     public static KeyMapping toggleEnabledKey;
     public static KeyMapping toggleCompactKey;
 

@@ -14,7 +14,7 @@ import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
