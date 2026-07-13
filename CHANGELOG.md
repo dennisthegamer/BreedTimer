@@ -5,6 +5,11 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.1] - 2026-07-13
+
+### Fixed
+- **Fabric jar now installable on Minecraft 1.21.9 and 1.21.10** — the declared `minecraft` dependency range was accidentally `>=1.21.11`, so Fabric Loader refused to start the (fully compatible) jar on 1.21.9/1.21.10. The range is now `>=1.21.9 <=1.21.11`. The NeoForge jar is unchanged and still requires 1.21.11 exactly.
+
 ## [1.3.0] - 2026-07-11
 
 ### Added
