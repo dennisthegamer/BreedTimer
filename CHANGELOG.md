@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Fabric jar now installable on Minecraft 1.21.9 and 1.21.10** — the declared `minecraft` dependency range was accidentally `>=1.21.11`, so Fabric Loader refused to start the (fully compatible) jar on 1.21.9/1.21.10. The range is now `>=1.21.9 <=1.21.11`. The NeoForge jar is unchanged and still requires 1.21.11 exactly.
+- **No more crash on joining a world on 1.21.9/1.21.10** — `Level.getGameTime()` was given a new intermediary name in 1.21.11, so the jar (compiled against 1.21.11) threw `NoSuchMethodError` on the older versions the moment timers started ticking. The tick loop now reads the game time via `LevelData`, whose name is stable across 1.21.9–1.21.11.
 
 ## [1.3.0] - 2026-07-11
 
