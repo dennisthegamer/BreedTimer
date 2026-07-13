@@ -122,7 +122,7 @@ public class TurtleEggRenderer {
                 labelPos.y - camPos.y,
                 labelPos.z - camPos.z
             );
-            matrices.mulPose(orientation);
+            RenderCompat.rotate(matrices, orientation);
             matrices.scale(0.025F, -0.025F, 0.025F);
 
             mc.font.drawInBatch(

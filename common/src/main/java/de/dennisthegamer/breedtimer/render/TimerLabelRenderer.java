@@ -69,7 +69,7 @@ public class TimerLabelRenderer {
         matrices.pushPose();
         // Position above the entity — offset higher if it has a vanilla name tag
         matrices.translate(0.0, bbHeight + 1.0, 0.0);
-        matrices.mulPose(camera.rotation());
+        RenderCompat.rotate(matrices, camera.rotation());
         matrices.scale(0.025F, -0.025F, 0.025F);
 
         mc.font.drawInBatch(

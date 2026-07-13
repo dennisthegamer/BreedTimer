@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **No more crash on joining a world on Fabric 1.21.2–1.21.4** — `Cow` was given a fresh intermediary class name when `AbstractCow` was introduced in 1.21.5, so the jar (compiled against 1.21.5) threw `NoClassDefFoundError` on the older versions as soon as timers started ticking. Cows are now matched by their stable `EntityType` instead of the class. The NeoForge jar was unaffected.
+- **No more crash rendering a label on Fabric 1.21.2–1.21.4** — the 1.21.5 render refactor changed `PoseStack.mulPose` from taking `Quaternionf` to `Quaternionfc`, so a label drawn on the older versions threw `NoSuchMethodError`. Labels now rotate the pose matrix directly, which links across the whole range.
 
 ## [1.3.0] - 2026-07-11
 
