@@ -183,7 +183,10 @@ public class BreedCooldownHelper {
     public static void tick(Level world, boolean paused, List<Entity> loadedEntities) {
         if (paused) return;
 
-        long currentGameTime = world.getGameTime();
+        // Via LevelData: Level.getGameTime() got a fresh intermediary name in 1.21.11,
+        // so this multi-version jar NoSuchMethodErrors on 1.21.9/1.21.10. LevelData.getGameTime()
+        // (which Level.getGameTime() delegates to) keeps a stable name across all three.
+        long currentGameTime = world.getLevelData().getGameTime();
         int delta = lastGameTime < 0 ? 1 : (int) Math.min(currentGameTime - lastGameTime, 6000);
         lastGameTime = currentGameTime;
 
