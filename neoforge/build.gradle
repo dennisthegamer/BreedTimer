@@ -20,6 +20,10 @@ repositories {
 		name = 'NeoForged'
 		url = 'https://maven.neoforged.net/releases/'
 	}
+	maven {
+		name = 'QuiltMC'
+		url = 'https://maven.quiltmc.org/repository/release/'
+	}
 }
 
 dependencies {
@@ -28,8 +32,12 @@ dependencies {
 	// YACL is optional at runtime — compile-only so the jar doesn't force it
 	modCompileOnly "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-neoforge"
 
-	// ...but load YACL in the dev client so the config screen is testable
+	// ...but load YACL in the dev client so the config screen is testable.
+	// YACL's jar-in-jar libraries don't load in the loom dev runtime, so its
+	// quilt-parsers dependency must join the FML module layer explicitly.
 	modLocalRuntime "dev.isxander:yet-another-config-lib:${rootProject.yacl_version}-neoforge"
+	forgeRuntimeLibrary "org.quiltmc.parsers:json:0.3.1"
+	forgeRuntimeLibrary "org.quiltmc.parsers:gson:0.3.1"
 
 	common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
 	shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive = false }
