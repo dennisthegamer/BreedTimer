@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Backport to Minecraft 1.21.2–1.21.5** — same feature set as the newer releases, built against 1.21.5 with Fabric and NeoForge jars from one shared codebase. NeoForge requires 21.3+ (no stable NeoForge exists for 1.21.2; use Fabric there).
 
+### Fixed
+- **No more crash on joining a world on Fabric 1.21.2–1.21.4** — `Cow` was given a fresh intermediary class name when `AbstractCow` was introduced in 1.21.5, so the jar (compiled against 1.21.5) threw `NoClassDefFoundError` on the older versions as soon as timers started ticking. Cows are now matched by their stable `EntityType` instead of the class. The NeoForge jar was unaffected.
+
 ## [1.3.0] - 2026-07-11
 
 ### Added

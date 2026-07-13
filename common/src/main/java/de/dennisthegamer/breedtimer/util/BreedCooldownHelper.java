@@ -11,7 +11,6 @@ import net.minecraft.world.entity.animal.Bee;
 import net.minecraft.world.entity.animal.camel.Camel;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.armadillo.Armadillo;
-import net.minecraft.world.entity.animal.Cow;
 import net.minecraft.world.entity.animal.MushroomCow;
 import net.minecraft.world.entity.animal.horse.Donkey;
 import net.minecraft.world.entity.animal.horse.Horse;
@@ -322,7 +321,10 @@ public class BreedCooldownHelper {
     }
 
     public static boolean isSupportedAnimal(Entity entity) {
-        return entity instanceof Cow
+        // Cow got a fresh intermediary class name when AbstractCow was introduced in
+        // 1.21.5, so `instanceof Cow` NoClassDefFoundErrors on 1.21.2-1.21.4. Match by the
+        // stable EntityType instead (Mooshrooms are still caught by MushroomCow below).
+        return entity.getType() == EntityType.COW
                 || entity.getType() == EntityType.SHEEP
                 || entity instanceof Pig
                 || entity instanceof Chicken
