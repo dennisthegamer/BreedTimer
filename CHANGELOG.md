@@ -7,8 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.3.1] - 2026-07-13
 
-### Fixed
-- **Fabric jar now installable on Minecraft 1.21.9 and 1.21.10** — the declared `minecraft` dependency range was accidentally `>=1.21.11`, so Fabric Loader refused to start the (fully compatible) jar on 1.21.9/1.21.10. The range is now `>=1.21.9 <=1.21.11`. The NeoForge jar is unchanged and still requires 1.21.11 exactly.
+### Added
+- **Backport to Minecraft 1.21.6–1.21.8** — same feature set as the 1.21.9–1.21.11 release, built against 1.21.8 with Fabric and NeoForge jars from one shared codebase.
 
 ## [1.3.0] - 2026-07-11
 
