@@ -2,6 +2,7 @@ package de.dennisthegamer.breedtimer.util;
 
 import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.monster.hoglin.Hoglin;
 import net.minecraft.world.entity.monster.Strider;
 import net.minecraft.world.entity.animal.Animal;
@@ -24,10 +25,8 @@ import net.minecraft.world.entity.animal.goat.Goat;
 import net.minecraft.world.entity.animal.Panda;
 import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.entity.animal.Rabbit;
-import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.animal.sniffer.Sniffer;
 import net.minecraft.world.entity.animal.Turtle;
-import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.phys.HitResult;
@@ -324,7 +323,7 @@ public class BreedCooldownHelper {
 
     public static boolean isSupportedAnimal(Entity entity) {
         return entity instanceof Cow
-                || entity instanceof Sheep
+                || entity.getType() == EntityType.SHEEP
                 || entity instanceof Pig
                 || entity instanceof Chicken
                 || entity instanceof Rabbit
@@ -333,7 +332,7 @@ public class BreedCooldownHelper {
                 || entity instanceof Mule
                 || entity instanceof Llama
                 || entity instanceof Fox
-                || entity instanceof Wolf
+                || entity.getType() == EntityType.WOLF
                 || entity instanceof Cat
                 || entity instanceof Ocelot
                 || entity instanceof Panda
