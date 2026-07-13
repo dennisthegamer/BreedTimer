@@ -128,7 +128,7 @@ jobs:
 
           - **Minecraft:** 1.21.6–1.21.8
           - **Fabric Loader:** ${{ needs.build.outputs.loader_version }}+ with Fabric API ${{ needs.build.outputs.fabric_api_version }}
-          - **NeoForge:** ${{ needs.build.outputs.neoforge_version }}+
+          - **NeoForge:** 21.6+
           - **Java:** 21+
 
           ## Build Artifacts

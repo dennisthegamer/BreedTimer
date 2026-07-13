@@ -40,9 +40,9 @@ This lightweight client-side mod for Fabric and NeoForge displays floating timer
 
 ## Supported Animals
 
-All breedable animals in MC 26.1 are covered:
+All breedable animals are covered:
 
-Cow, Mooshroom, Sheep, Pig, Chicken, Rabbit, Horse, Donkey, Mule, Llama, Wolf, Cat, Ocelot, Fox, Panda, Goat, Camel, Sniffer, Bee, Turtle, Axolotl, Frog, Strider, Hoglin, Armadillo, Nautilus
+Cow, Mooshroom, Sheep, Pig, Chicken, Rabbit, Horse, Donkey, Mule, Llama, Wolf, Cat, Ocelot, Fox, Panda, Goat, Camel, Sniffer, Bee, Turtle, Axolotl, Frog, Strider, Hoglin, Armadillo
 
 Plus **Villagers** with full breed cooldown and baby tracking.
 
@@ -72,7 +72,7 @@ Configure everything in-game via ModMenu:
 
 ## Requirements
 
-- **Minecraft**: 1.21.9–1.21.11 (Fabric) / 1.21.11 (NeoForge)
+- **Minecraft**: 1.21.6–1.21.8 (Fabric and NeoForge)
 - **Mod Loader**: Fabric (0.17.0+, requires Fabric API) or NeoForge
 - **Java**: 21 or higher
 - **YACL**: Optional (for in-game config screen)
