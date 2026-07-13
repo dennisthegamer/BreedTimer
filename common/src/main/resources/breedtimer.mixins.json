@@ -6,8 +6,7 @@
   "client": [
     "EntityRendererMixin",
     "AnimalEventMixin",
-    "VillagerEventMixin",
-    "LevelRendererSubmitMixin"
+    "VillagerEventMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -2,11 +2,11 @@ package de.dennisthegamer.breedtimer.render;
 
 import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -59,8 +59,8 @@ public class TurtleEggRenderer {
         return new int[]{fresh, cracking, hatching};
     }
 
-    /** Called during level-render submit collection – renders floating labels above turtle egg blocks. */
-    public static void render(PoseStack matrices, SubmitNodeCollector queue, CameraRenderState camera) {
+    /** Called after entities have rendered – renders floating labels above turtle egg blocks. */
+    public static void render(PoseStack matrices, MultiBufferSource bufferSource, Camera camera) {
         if (eggCache.isEmpty()) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -70,8 +70,8 @@ public class TurtleEggRenderer {
         BreedTimerConfig config = BreedTimerConfig.get();
         if (!config.enabled || config.compactMode || !config.showAnimals) return;
 
-        Vec3 camPos = camera.pos;
-        org.joml.Quaternionf orientation = camera.orientation;
+        Vec3 camPos = camera.getPosition();
+        org.joml.Quaternionf orientation = camera.rotation();
 
         Vec3 eyePos = player.getEyePosition();
         Vec3 lookDir = player.getLookAngle().normalize();
@@ -125,17 +125,17 @@ public class TurtleEggRenderer {
             matrices.mulPose(orientation);
             matrices.scale(0.025F, -0.025F, 0.025F);
 
-            queue.submitText(
-                matrices,
+            mc.font.drawInBatch(
+                text.getVisualOrderText(),
                 -mc.font.width(text) / 2.0F,
                 0.0F,
-                text.getVisualOrderText(),
-                false,
-                Font.DisplayMode.NORMAL,
-                LightTexture.FULL_BRIGHT,
                 textColor,
+                false,
+                matrices.last().pose(),
+                bufferSource,
+                Font.DisplayMode.NORMAL,
                 bgColor,
-                0
+                LightTexture.FULL_BRIGHT
             );
 
             matrices.popPose();
