@@ -6,22 +6,20 @@ import de.dennisthegamer.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
 import de.dennisthegamer.breedtimer.util.VillagerCooldownHelper;
 import de.dennisthegamer.breedtimer.util.VillagerCooldownHelper.VillagerTimerInfo;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.entity.state.EntityRenderState;
-import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 
 public class TimerLabelRenderer {
 
-    public static void renderLabel(EntityRenderState state, Animal animal, PoseStack matrices,
-                                   SubmitNodeCollector queue, CameraRenderState camera) {
+    public static void renderLabel(Animal animal, PoseStack matrices,
+                                   MultiBufferSource bufferSource, Camera camera) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null) return;
@@ -36,12 +34,12 @@ public class TimerLabelRenderer {
         AnimalTimerInfo info = BreedCooldownHelper.createTimerInfo(animal);
         if (info.state() == BreedCooldownHelper.AnimalState.BABY && !config.showBabyTimer) return;
 
-        renderText(state, animal.getBbHeight(), matrices, queue, camera, mc,
+        renderText(animal.getBbHeight(), matrices, bufferSource, camera, mc,
                 getDisplayComponent(info), fade, info.color(), config.backgroundOpacity);
     }
 
-    public static void renderVillagerLabel(EntityRenderState state, Villager villager, PoseStack matrices,
-                                           SubmitNodeCollector queue, CameraRenderState camera) {
+    public static void renderVillagerLabel(Villager villager, PoseStack matrices,
+                                           MultiBufferSource bufferSource, Camera camera) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null) return;
@@ -56,37 +54,35 @@ public class TimerLabelRenderer {
         VillagerTimerInfo info = VillagerCooldownHelper.createTimerInfo(villager);
         if (info.state() == VillagerCooldownHelper.VillagerState.BABY && !config.showBabyTimer) return;
 
-        renderText(state, villager.getBbHeight(), matrices, queue, camera, mc,
+        renderText(villager.getBbHeight(), matrices, bufferSource, camera, mc,
                 getVillagerDisplayComponent(info), fade, info.color(), config.backgroundOpacity);
     }
 
-    private static void renderText(EntityRenderState state, float bbHeight, PoseStack matrices,
-                                   SubmitNodeCollector queue, CameraRenderState camera,
+    private static void renderText(float bbHeight, PoseStack matrices,
+                                   MultiBufferSource bufferSource, Camera camera,
                                    Minecraft mc, Component text, float fade, int color, float bgOpacity) {
         int textAlpha = (int) (fade * 255.0f);
         int textColor = (textAlpha << 24) | color;
         int bgAlpha = (int) (bgOpacity * fade * 255.0f);
         int backgroundColor = bgAlpha << 24;
 
-        // Position above the entity — offset higher if it has a vanilla name tag
-        Vec3 attachment = new Vec3(0, bbHeight + 0.5, 0);
-
         matrices.pushPose();
-        matrices.translate(attachment.x, attachment.y + 0.5, attachment.z);
-        matrices.mulPose(camera.orientation);
+        // Position above the entity — offset higher if it has a vanilla name tag
+        matrices.translate(0.0, bbHeight + 1.0, 0.0);
+        matrices.mulPose(camera.rotation());
         matrices.scale(0.025F, -0.025F, 0.025F);
 
-        queue.submitText(
-                matrices,
+        mc.font.drawInBatch(
+                text.getVisualOrderText(),
                 -mc.font.width(text) / 2.0F,
                 0.0F,
-                text.getVisualOrderText(),
-                false,
-                Font.DisplayMode.NORMAL,
-                LightTexture.FULL_BRIGHT,
                 textColor,
+                false,
+                matrices.last().pose(),
+                bufferSource,
+                Font.DisplayMode.NORMAL,
                 backgroundColor,
-                0
+                LightTexture.FULL_BRIGHT
         );
 
         matrices.popPose();
