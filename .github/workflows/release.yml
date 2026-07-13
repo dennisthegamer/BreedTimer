@@ -1,12 +1,12 @@
 # Automatically create GitHub releases with build artifacts
-# for every push to the mc1.21.2-1.21.5 branch
+# for every push to the mc1.21-1.21.1 branch
 
 name: Release
 
 on:
   push:
     branches:
-      - mc1.21.2-1.21.5
+      - mc1.21-1.21.1
 
 jobs:
   build:
@@ -126,9 +126,9 @@ jobs:
 
           ## Compatibility
 
-          - **Minecraft:** 1.21.2–1.21.5
+          - **Minecraft:** 1.21–1.21.1
           - **Fabric Loader:** ${{ needs.build.outputs.loader_version }}+ with Fabric API ${{ needs.build.outputs.fabric_api_version }}
-          - **NeoForge:** 21.3+
+          - **NeoForge:** 21.0+
           - **Java:** 21+
 
           ## Build Artifacts
