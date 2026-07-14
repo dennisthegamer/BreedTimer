@@ -5,7 +5,10 @@
   "name": "BreedTimer",
   "description": "Shows floating timers above breedable animals indicating when they can breed again.",
   "authors": ["Dennis_thegamer"],
-  "contact": {},
+  "contact": {
+    "homepage": "https://modrinth.com/mod/breedtimer",
+    "issues": "https://github.com/DennisTheGamer/BreedTimer/issues"
+  },
   "license": "MIT",
   "icon": "assets/breedtimer/icon.png",
   "environment": "client",
