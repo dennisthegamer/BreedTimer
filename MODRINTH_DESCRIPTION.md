@@ -40,7 +40,7 @@ This lightweight client-side mod for Fabric and NeoForge displays floating timer
 
 ## Supported Animals
 
-All breedable animals in MC 26.1 are covered:
+All breedable animals in MC 1.21.11 are covered:
 
 Cow, Mooshroom, Sheep, Pig, Chicken, Rabbit, Horse, Donkey, Mule, Llama, Wolf, Cat, Ocelot, Fox, Panda, Goat, Camel, Sniffer, Bee, Turtle, Axolotl, Frog, Strider, Hoglin, Armadillo, Nautilus
 
@@ -87,8 +87,8 @@ Configure everything in-game via ModMenu:
 
 ## Links
 
-- **Issues & Bugs**: [GitHub Issues](https://github.com/DennisTheGamer/breed-timer/issues)
-- **Source Code**: [GitHub Repository](https://github.com/DennisTheGamer/breed-timer)
+- **Issues & Bugs**: [GitHub Issues](https://github.com/DennisTheGamer/BreedTimer/issues)
+- **Source Code**: [GitHub Repository](https://github.com/DennisTheGamer/BreedTimer)
 
 ## License
 
@@ -96,4 +96,4 @@ This mod is open-source and licensed under the MIT License.
 
 ---
 
-**Made with love by DennisTheGamer**
+**Made with love by Dennis_thegamer**

@@ -24,7 +24,7 @@ A Minecraft mod for Fabric and NeoForge that displays floating timers above bree
 
 ## Download
 
-Download the latest release from [Modrinth](https://modrinth.com/mod/breed-timer) or [GitHub Releases](https://github.com/DennisTheGamer/breed-timer/releases). Each release contains one JAR per mod loader (`breedtimer-fabric-…` and `breedtimer-neoforge-…`).
+Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader (`breedtimer-fabric-1.4.0+mc1.21.9-1.21.11.jar` and `breedtimer-neoforge-1.4.0+mc1.21.9-1.21.11.jar`).
 
 ## Installation
 
@@ -51,8 +51,8 @@ Config file is saved at `config/breedtimer.json5`.
 ## Building from Source
 
 ```bash
-git clone https://github.com/DennisTheGamer/breed-timer.git
-cd breed-timer
+git clone https://github.com/DennisTheGamer/BreedTimer.git
+cd BreedTimer
 ./gradlew build
 ```
 
@@ -64,10 +64,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Credits
 
-- **Author**: DennisTheGamer
+- **Author**: Dennis_thegamer
 - **Built with**: Fabric, Fabric API, NeoForge, YACL
 
 ## Support
 
-- Report bugs on [GitHub Issues](https://github.com/DennisTheGamer/breed-timer/issues)
-- Visit the [Modrinth page](https://modrinth.com/mod/breed-timer) for more information
+- Report bugs on [GitHub Issues](https://github.com/DennisTheGamer/BreedTimer/issues)
+- Visit the [Modrinth page](https://modrinth.com/mod/breedtimer) for more information
