@@ -2,10 +2,12 @@ modLoader = "javafml"
 loaderVersion = "[1,)"
 license = "MIT"
 
+issueTrackerURL = "https://github.com/DennisTheGamer/BreedTimer/issues"
 [[mods]]
 modId = "breedtimer"
 version = "${version}"
 displayName = "BreedTimer"
+displayURL = "https://modrinth.com/mod/breedtimer"
 description = '''Shows floating timers above breedable animals indicating when they can breed again.'''
 logoFile = "assets/breedtimer/icon.png"
 authors = "Dennis_thegamer"
