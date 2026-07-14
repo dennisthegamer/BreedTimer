@@ -20,7 +20,7 @@ allprojects {
 	apply plugin: 'java'
 	apply plugin: 'architectury-plugin'
 
-	version = "${rootProject.mod_version}+mc${rootProject.minecraft_version}"
+	version = "${rootProject.mod_version}+mc${rootProject.minecraft_range}"
 	group = rootProject.maven_group
 
 	base {
