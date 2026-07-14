@@ -5,6 +5,13 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-14
+
+### Changed
+- Unified the mod version to `1.4.0` across all loaders and supported Minecraft versions, so every build carries one consistent version.
+- Standardized jar naming to `<modid>-<loader>-<version>+mc<range>` (e.g. `breedtimer-fabric-1.4.0+mc26.1-26.1.2.jar`).
+- Corrected author and contact metadata — author credited as `Dennis_thegamer`; Modrinth and GitHub links now match the published jar metadata.
+
 ## [1.3.1] - 2026-07-12
 
 ### Changed
