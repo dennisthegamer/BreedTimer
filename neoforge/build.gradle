@@ -16,6 +16,7 @@ configurations {
 }
 
 repositories {
+	mavenLocal()
 	maven {
 		name = 'NeoForged'
 		url = 'https://maven.neoforged.net/releases/'
@@ -41,6 +42,16 @@ dependencies {
 
 	common(project(path: ':common', configuration: 'namedElements')) { transitive = false }
 	shadowCommon(project(path: ':common', configuration: 'transformProductionNeoForge')) { transitive = false }
+
+	// jar-in-jar: hudlib-core is pure Java (no Minecraft refs), so it can be included directly.
+	include "de.dennisthegamer:hudlib-core:1.0.8"
+	// jar-in-jar: hudlib-ui must be the mojmap variant here. The default artifact is remapped to
+	// intermediary for Fabric, and nothing in the NeoForge include pipeline converts it back, so
+	// bundling it made the config screen die on NoClassDefFoundError: net/minecraft/class_437.
+	// Plain include + compileOnly on purpose: modImplementation would send it through Loom's
+	// remap pipeline, which is exactly what must not happen to an already-mojmap jar.
+	compileOnly "de.dennisthegamer:hudlib-ui-neoforge:1.0.8+mc1.21-1.21.8"
+	include "de.dennisthegamer:hudlib-ui-neoforge:1.0.8+mc1.21-1.21.8"
 }
 
 processResources {

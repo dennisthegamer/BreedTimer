@@ -3,12 +3,17 @@ package de.dennisthegamer.breedtimer.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import de.dennisthegamer.breedtimer.platform.Platforms;
+import de.dennisthegamer.hudlib.position.HudAnchor;
+import de.dennisthegamer.hudlib.position.HudPlacement;
+import de.dennisthegamer.hudlib.position.HudPreset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BreedTimerConfig {
 
@@ -30,6 +35,10 @@ public class BreedTimerConfig {
     public float backgroundOpacity = 0.5f;
     public boolean playSound = true;
     public boolean compactMode = false;
+    /** Freie HUD-Position (Anker + Offset). Nach {@link #load()} immer non-null. */
+    public HudPlacement hudPlacement = null;
+    /** Vom Nutzer gespeicherte Positions-Slots. */
+    public List<HudPreset> hudSlots = new ArrayList<>();
 
     public static BreedTimerConfig get() {
         if (INSTANCE == null) load();
@@ -54,6 +63,17 @@ public class BreedTimerConfig {
         } else {
             INSTANCE = new BreedTimerConfig();
         }
+
+        // Migration: BreedTimer hatte nie eine Legacy-Positions-Enum, daher ist der HudLib-Default
+        // (TOP_LEFT, Standardrand) die einzig sinnvolle Ausgangslage. Läuft auf JEDEM Pfad oben, da
+        // INSTANCE hier garantiert gesetzt ist.
+        if (INSTANCE.hudPlacement == null) {
+            INSTANCE.hudPlacement = HudPlacement.of(HudAnchor.TOP_LEFT);
+        }
+        if (INSTANCE.hudSlots == null) {
+            INSTANCE.hudSlots = new ArrayList<>();
+        }
+
         save();
     }
 
