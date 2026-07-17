@@ -98,12 +98,18 @@ public class BreedTimerHud {
         return new Layout(lines, width, height);
     }
 
-    /** Zeichnet die Zeilen ab (x,y) — je Zeile eigener Hintergrund, wie im alten Renderer. */
+    /**
+     * Zeichnet die Zeilen so, dass die gemalte Bounding-Box exakt bei (x,y) beginnt — (x,y) ist die
+     * Box-Ecke oben-links (wie von computeLayout()/measureBox() vermessen und vom HudEditorScreen-
+     * Rahmen erwartet), nicht der Text-Ursprung. Je Zeile eigener Hintergrund, wie im alten Renderer.
+     */
     private static void draw(GuiGraphics graphics, int x, int y, Layout layout, Font font, int bgColor) {
-        int currentY = y;
+        int textX = x + 2;   // 2px-Inset, das die Zeilen-Fills unten voraussetzen
+        int textY = y + 2;
+        int currentY = textY;
         for (MutableComponent line : layout.lines()) {
-            graphics.fill(x - 2, currentY - 2, x + font.width(line) + 2, currentY + font.lineHeight + 2, bgColor);
-            graphics.drawString(font, line, x, currentY, 0xFFFFFFFF, true);
+            graphics.fill(textX - 2, currentY - 2, textX + font.width(line) + 2, currentY + font.lineHeight + 2, bgColor);
+            graphics.drawString(font, line, textX, currentY, 0xFFFFFFFF, true);
             currentY += font.lineHeight + 4;
         }
     }
