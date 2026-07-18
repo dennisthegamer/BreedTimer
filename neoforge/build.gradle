@@ -18,6 +18,10 @@ configurations {
 repositories {
 	mavenLocal()
 	maven {
+		name = 'DennisTheGamer'
+		url = 'https://dennisthegamer.github.io/maven'
+	}
+	maven {
 		name = 'NeoForged'
 		url = 'https://maven.neoforged.net/releases/'
 	}
