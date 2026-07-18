@@ -44,7 +44,7 @@ public final class BreedTimerClient {
     private BreedTimerClient() {}
 
     public static void init() {
-        BreedTimerConfig.HANDLER.load();
+        BreedTimerConfig.load();
 
         toggleEnabledKey = new KeyMapping(
                 "key.breedtimer.toggleEnabled",
@@ -89,13 +89,13 @@ public final class BreedTimerClient {
         if (toggleEnabledKey.consumeClick()) {
             BreedTimerConfig config = BreedTimerConfig.get();
             config.enabled = !config.enabled;
-            BreedTimerConfig.HANDLER.save();
+            BreedTimerConfig.save();
         }
 
         if (toggleCompactKey.consumeClick()) {
             BreedTimerConfig config = BreedTimerConfig.get();
             config.compactMode = !config.compactMode;
-            BreedTimerConfig.HANDLER.save();
+            BreedTimerConfig.save();
         }
 
         BreedTimerConfig config = BreedTimerConfig.get();

@@ -35,3 +35,17 @@ type = "optional"
 versionRange = "[3.9.4,)"
 ordering = "NONE"
 side = "CLIENT"
+
+[[dependencies.breedtimer]]
+modId = "hudlib"
+type = "required"
+versionRange = "[1.1,)"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.breedtimer]]
+modId = "hudlibcore"
+type = "required"
+versionRange = "[1.1,)"
+ordering = "AFTER"
+side = "CLIENT"
