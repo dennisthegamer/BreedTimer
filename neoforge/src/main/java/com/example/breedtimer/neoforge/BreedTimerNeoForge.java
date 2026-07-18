@@ -4,6 +4,7 @@ import com.example.breedtimer.BreedTimerClient;
 import com.example.breedtimer.config.BreedTimerConfigScreen;
 import com.example.breedtimer.render.BreedTimerHud;
 import com.example.breedtimer.render.TurtleEggRenderer;
+import de.dennisthegamer.hudlib.neoforge.HudLibNeoForge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
@@ -29,7 +30,7 @@ public final class BreedTimerNeoForge {
             event.register(BreedTimerClient.toggleCompactKey);
         });
 
-        modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAboveAll(
+        modBus.addListener(RegisterGuiLayersEvent.class, event -> HudLibNeoForge.register(event,
                 Identifier.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
                 BreedTimerHud::extractRenderState));
 
