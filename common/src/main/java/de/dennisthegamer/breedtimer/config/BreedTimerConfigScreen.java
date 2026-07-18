@@ -1,5 +1,9 @@
 package de.dennisthegamer.breedtimer.config;
 
+import de.dennisthegamer.breedtimer.hud.BreedTimerHudBox;
+import de.dennisthegamer.breedtimer.hud.BreedTimerSlotStore;
+import de.dennisthegamer.hudlib.ui.HudEditorScreen;
+import dev.isxander.yacl3.api.ButtonOption;
 import dev.isxander.yacl3.api.ConfigCategory;
 import dev.isxander.yacl3.api.Option;
 import dev.isxander.yacl3.api.OptionDescription;
@@ -7,6 +11,7 @@ import dev.isxander.yacl3.api.YetAnotherConfigLib;
 import dev.isxander.yacl3.api.controller.FloatSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
 import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -53,6 +58,18 @@ public class BreedTimerConfigScreen {
                                 .name(Component.translatable("breedtimer.config.compactMode"))
                                 .binding(def.compactMode, () -> cfg.compactMode, v -> cfg.compactMode = v)
                                 .controller(TickBoxControllerBuilder::create)
+                                .build())
+                        .option(ButtonOption.createBuilder()
+                                .name(Component.translatable("breedtimer.config.hud_edit"))
+                                .description(OptionDescription.of(
+                                        Component.translatable("breedtimer.config.hud_edit.desc")))
+                                .action((yaclScreen, opt) -> {
+                                    BreedTimerConfig liveConfig = BreedTimerConfig.get();
+                                    Minecraft.getInstance().setScreen(new HudEditorScreen(
+                                            yaclScreen, new BreedTimerHudBox(), new BreedTimerSlotStore(),
+                                            () -> liveConfig.hudPlacement,
+                                            p -> { liveConfig.hudPlacement = p; BreedTimerConfig.save(); }));
+                                })
                                 .build())
                         .build())
 

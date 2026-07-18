@@ -18,6 +18,8 @@
   "breedtimer.config.backgroundOpacity": "Hintergrund-Transparenz",
   "breedtimer.config.playSound": "Ton abspielen wenn bereit",
   "breedtimer.config.compactMode": "Kompaktmodus",
+  "breedtimer.config.hud_edit": "HUD-Position bearbeiten…",
+  "breedtimer.config.hud_edit.desc": "Öffnet den Editor zum freien Platzieren des HUD und Verwalten von Presets.",
   "key.category.breedtimer.breedtimer": "Breed Timer",
   "key.breedtimer.toggleEnabled": "An/Aus umschalten",
   "key.breedtimer.toggleCompact": "Kompaktmodus umschalten",
