@@ -21,7 +21,9 @@
     "fabricloader": "${fabricloader_dep}",
     "fabric-api": "*",
     "minecraft": "${minecraft_dep}",
-    "java": ">=21"
+    "java": ">=21",
+    "hudlib": ">=1.0",
+    "hudlibcore": ">=1.0"
   },
   "suggests": {
     "modmenu": ">=11.0.0",
