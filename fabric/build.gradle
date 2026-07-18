@@ -15,6 +15,10 @@ java {
 
 repositories {
 	mavenLocal()
+	maven {
+		name = 'DennisTheGamer'
+		url = 'https://dennisthegamer.github.io/maven'
+	}
 	mavenCentral()
 	maven {
 		name = 'Fabric'
