@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Standardized jar naming to `<modid>-<loader>-<version>+mc<range>` (e.g. `breedtimer-fabric-1.4.0+mc1.21.9-1.21.11.jar`).
 - Corrected author and contact metadata — author credited as `Dennis_thegamer`; Modrinth and GitHub links now match the published jar metadata.
 
+### Fixed
+- **NeoForge jar no longer claims 1.21.9/1.21.10 support it never had** — the new `+mc<range>` jar naming applied the same `1.21.9-1.21.11` range to every loader, including NeoForge, even though NeoForge jars bake in Mojang mappings (not Fabric's version-stable intermediary) and 1.21.11 reorganized several entity classes into new packages. A NeoForge jar built against 1.21.11 mojmap never actually ran on 1.21.9/1.21.10 despite the name. NeoForge now has its own `minecraft_range_neoforge` range, so the jar is correctly named `breedtimer-neoforge-1.4.0+mc1.21.11.jar`. The Fabric jar is unaffected and unchanged — it keeps `+mc1.21.9-1.21.11`.
+
 ## [1.3.1] - 2026-07-13
 
 ### Fixed
