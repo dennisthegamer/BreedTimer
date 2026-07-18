@@ -38,10 +38,10 @@ dependencies {
 	shadowCommon(project(path: ':common', configuration: 'transformProductionFabric')) { transitive = false }
 
 	// jar-in-jar: hudlib-core is pure Java (no Minecraft refs), so it can be included directly.
-	include "de.dennisthegamer:hudlib-core:1.0.8"
+	include "de.dennisthegamer:hudlib-core:1.0.9"
 	// jar-in-jar: hudlib-ui references Minecraft classes, so it must go through modImplementation
 	// (loom remaps it) before being embedded, so the nested jar carries intermediary references.
-	include(modImplementation("de.dennisthegamer:hudlib-ui:1.0.8+mc1.21.9-1.21.11"))
+	include(modImplementation("de.dennisthegamer:hudlib-ui:1.0.9+mc1.21.9-1.21.11"))
 }
 
 processResources {
