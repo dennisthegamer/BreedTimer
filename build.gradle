@@ -20,7 +20,11 @@ allprojects {
 	apply plugin: 'java'
 	apply plugin: 'architectury-plugin'
 
-	version = "${rootProject.mod_version}+mc${rootProject.minecraft_range}"
+	// NeoForge bakes mojmap class names into the jar and can't span the whole Fabric-safe
+	// band (see minecraft_range_neoforge in gradle.properties) — so it gets its own,
+	// narrower range here while common/fabric keep the full minecraft_range.
+	def mcRange = project.name == 'neoforge' ? rootProject.minecraft_range_neoforge : rootProject.minecraft_range
+	version = "${rootProject.mod_version}+mc${mcRange}"
 	group = rootProject.maven_group
 
 	base {
