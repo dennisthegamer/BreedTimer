@@ -37,7 +37,7 @@ jobs:
           MC_RANGE=$(grep '^minecraft_range=' gradle.properties | cut -d'=' -f2)
           MC_RANGE_NEO=$(grep '^minecraft_range_neoforge=' gradle.properties | cut -d'=' -f2)
           # Branches ohne eigene NeoForge-Range nutzen weiterhin die gemeinsame
-          [ -z "$MC_RANGE_NEO" ] && MC_RANGE_NEO="$MC_RANGE"
+          MC_RANGE_NEO=${MC_RANGE_NEO:-$MC_RANGE}
           echo "minecraft_range=$MC_RANGE" >> $GITHUB_OUTPUT
           echo "minecraft_range_neoforge=$MC_RANGE_NEO" >> $GITHUB_OUTPUT
           echo "fabric_api_version=$FABRIC_VERSION" >> $GITHUB_OUTPUT
