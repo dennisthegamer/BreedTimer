@@ -18,7 +18,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityRenderer.class)
 public abstract class EntityRendererMixin<T extends Entity> {
 
-    @Inject(method = "render", at = @At("TAIL"))
+    // HEAD, not TAIL: on 1.21/1.21.1 EntityRenderer#render returns early when
+    // shouldShowName() is false, so TAIL only fires for entities that carry a name
+    // tag — every plain animal/villager silently skipped the label. The method got a
+    // single exit again in 1.21.2, which is why the later branches can use TAIL.
+    @Inject(method = "render", at = @At("HEAD"))
     private void breedtimer$onRender(T entity, float entityYaw, float partialTick, PoseStack matrices,
                                       MultiBufferSource bufferSource, int packedLight, CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
