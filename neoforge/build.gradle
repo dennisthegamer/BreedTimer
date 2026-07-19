@@ -2,7 +2,9 @@ plugins {
 	id 'net.neoforged.moddev'
 }
 
-version = "${project.mod_version}+mc${project.minecraft_range}"
+// NeoForge laeuft im 26.1-Band erst ab 26.1.2; Fabric deckt 26.1-26.1.2 ab.
+def mcRange = project.findProperty("minecraft_range_neoforge") ?: project.minecraft_range
+version = "${project.mod_version}+mc${mcRange}"
 group = project.maven_group
 
 base {
