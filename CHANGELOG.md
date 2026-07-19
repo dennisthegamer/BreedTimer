@@ -5,6 +5,16 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.1] - 2026-07-19
+
+### Added
+- **Freely movable HUD**: drag the timer panel anywhere on screen and save named
+  position presets. HudLib is bundled inside the jar (jar-in-jar), so there is
+  nothing extra to install.
+
+### Changed
+- An existing HUD corner setting is migrated automatically to the same spot
+
 ## [1.4.0] - 2026-07-14
 
 ### Changed
