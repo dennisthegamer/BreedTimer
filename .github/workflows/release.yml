@@ -15,6 +15,8 @@ jobs:
     outputs:
       mod_version: ${{ steps.version.outputs.mod_version }}
       minecraft_version: ${{ steps.version.outputs.minecraft_version }}
+      minecraft_range: ${{ steps.version.outputs.minecraft_range }}
+      minecraft_range_neoforge: ${{ steps.version.outputs.minecraft_range_neoforge }}
       fabric_api_version: ${{ steps.version.outputs.fabric_api_version }}
       loader_version: ${{ steps.version.outputs.loader_version }}
       neoforge_version: ${{ steps.version.outputs.neoforge_version }}
@@ -32,6 +34,12 @@ jobs:
           NEOFORGE_VERSION=$(grep '^neoforge_version=' gradle.properties | cut -d'=' -f2)
           echo "mod_version=$VERSION" >> $GITHUB_OUTPUT
           echo "minecraft_version=$MC_VERSION" >> $GITHUB_OUTPUT
+          MC_RANGE=$(grep '^minecraft_range=' gradle.properties | cut -d'=' -f2)
+          MC_RANGE_NEO=$(grep '^minecraft_range_neoforge=' gradle.properties | cut -d'=' -f2)
+          # Branches ohne eigene NeoForge-Range nutzen weiterhin die gemeinsame
+          [ -z "$MC_RANGE_NEO" ] && MC_RANGE_NEO="$MC_RANGE"
+          echo "minecraft_range=$MC_RANGE" >> $GITHUB_OUTPUT
+          echo "minecraft_range_neoforge=$MC_RANGE_NEO" >> $GITHUB_OUTPUT
           echo "fabric_api_version=$FABRIC_VERSION" >> $GITHUB_OUTPUT
           echo "loader_version=$LOADER_VERSION" >> $GITHUB_OUTPUT
           echo "neoforge_version=$NEOFORGE_VERSION" >> $GITHUB_OUTPUT
@@ -130,8 +138,8 @@ jobs:
 
           ## Build Artifacts
 
-          - `breedtimer-fabric-${{ needs.build.outputs.mod_version }}+mc${{ needs.build.outputs.minecraft_version }}.jar` - Fabric version
-          - `breedtimer-neoforge-${{ needs.build.outputs.mod_version }}+mc${{ needs.build.outputs.minecraft_version }}.jar` - NeoForge version
+          - `breedtimer-fabric-${{ needs.build.outputs.mod_version }}+mc${{ needs.build.outputs.minecraft_range }}.jar` - Fabric version
+          - `breedtimer-neoforge-${{ needs.build.outputs.mod_version }}+mc${{ needs.build.outputs.minecraft_range_neoforge }}.jar` - NeoForge version
 
           ## Recent Commits
 
