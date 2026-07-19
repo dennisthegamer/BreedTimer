@@ -25,7 +25,10 @@ side = "CLIENT"
 [[dependencies.breedtimer]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.3,)"
+# 21.2 is the NeoForge line for MC 1.21.2, which this jar claims above. A [21.3,)
+# floor made that claim unsatisfiable and aborted FML pre-loading for the whole
+# instance, not just this mod.
+versionRange = "[21.2,)"
 ordering = "NONE"
 side = "CLIENT"
 
