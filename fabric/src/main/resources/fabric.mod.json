@@ -13,8 +13,8 @@
   "icon": "assets/breedtimer/icon.png",
   "environment": "client",
   "entrypoints": {
-    "client": ["com.example.breedtimer.fabric.BreedTimerFabric"],
-    "modmenu": ["com.example.breedtimer.fabric.ModMenuIntegration"]
+    "client": ["de.dennisthegamer.breedtimer.fabric.BreedTimerFabric"],
+    "modmenu": ["de.dennisthegamer.breedtimer.fabric.ModMenuIntegration"]
   },
   "mixins": ["breedtimer.mixins.json"],
   "depends": {
