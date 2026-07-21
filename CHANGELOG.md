@@ -5,6 +5,14 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Internal: the NeoForge metadata now declares the bundled `hudlibcore` next to
+  `hudlib`. Both have always shipped inside the jar (jar-in-jar), only the
+  declaration was incomplete — there is nothing extra to install and nothing
+  changes in game.
+
 ## [1.4.1] - 2026-07-19
 
 ### Added

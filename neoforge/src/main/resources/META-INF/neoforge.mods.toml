@@ -45,3 +45,11 @@ type = "required"
 versionRange = "[1.0,)"
 ordering = "NONE"
 side = "CLIENT"
+
+# hudlibcore ships jar-in-jar alongside hudlib (pure Java, no Minecraft refs).
+[[dependencies.breedtimer]]
+modId = "hudlibcore"
+type = "required"
+versionRange = "[1.0,)"
+ordering = "NONE"
+side = "CLIENT"
