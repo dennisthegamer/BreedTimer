@@ -26,8 +26,8 @@ A Minecraft mod for Fabric and NeoForge that displays floating timers above bree
 
 Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader:
 
-- **Fabric**: `breedtimer-fabric-1.4.0+mc1.21.9-1.21.11.jar` — works on Minecraft 1.21.9 through 1.21.11.
-- **NeoForge**: `breedtimer-neoforge-1.4.0+mc1.21.11.jar` — Minecraft 1.21.11 only. NeoForge jars bake in Mojang mappings at compile time (unlike Fabric's version-stable intermediary), and 1.21.11 reorganized several entity classes into new packages, so there is no NeoForge build for 1.21.9/1.21.10.
+- **Fabric**: `breedtimer-fabric-1.4.1+mc1.21.9-1.21.11.jar` — works on Minecraft 1.21.9 through 1.21.11.
+- **NeoForge**: `breedtimer-neoforge-1.4.1+mc1.21.11.jar` — Minecraft 1.21.11 only. NeoForge jars bake in Mojang mappings at compile time (unlike Fabric's version-stable intermediary), and 1.21.11 reorganized several entity classes into new packages, so there is no NeoForge build for 1.21.9/1.21.10.
 
 ## Installation
 
@@ -43,13 +43,17 @@ Open the config screen via ModMenu (Fabric) or the mod list entry (NeoForge). Se
 
 - **General** - Enable/disable the mod, baby timers, compact mode
 - **Rendering** - Scan radius, fade distances, FOV angle, background opacity
+- **HUD** - The timer overlay can be placed freely: **Edit HUD position…** in the
+  config screen opens an editor where you drag the HUD anywhere on screen and save
+  named position presets
 - **Notifications** - Sound alerts when animals are ready
 
 Keybinds are listed under **Controls > Breed Timer**:
 - `N` - Toggle mod on/off
 - `B` - Toggle compact mode
 
-Config file is saved at `config/breedtimer.json5`.
+Config file is saved at `config/breedtimer.json`. An older `breedtimer.json5` from a
+previous version is read once and migrated automatically.
 
 ## Building from Source
 
