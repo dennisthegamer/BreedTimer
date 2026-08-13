@@ -16,7 +16,7 @@
     "client": ["de.dennisthegamer.breedtimer.fabric.BreedTimerFabric"],
     "modmenu": ["de.dennisthegamer.breedtimer.fabric.ModMenuIntegration"]
   },
-  "mixins": ["breedtimer.mixins.json"],
+  "mixins": ["breedtimer.mixins.json", "breedtimer-fabric.mixins.json"],
   "depends": {
     "fabricloader": "${fabricloader_dep}",
     "fabric-api": "*",
@@ -27,6 +27,6 @@
   },
   "suggests": {
     "modmenu": ">=11.0.0",
-    "yet_another_config_lib": ">=3.8.2"
+    "yet_another_config_lib_v3": ">=3.8.2"
   }
 }

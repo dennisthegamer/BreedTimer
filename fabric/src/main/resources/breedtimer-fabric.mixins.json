@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "de.dennisthegamer.breedtimer.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "FeedEventMixin$SheepAte"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

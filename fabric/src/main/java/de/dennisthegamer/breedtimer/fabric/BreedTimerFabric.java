@@ -1,8 +1,8 @@
 package de.dennisthegamer.breedtimer.fabric;
 
 import de.dennisthegamer.breedtimer.BreedTimerClient;
+import de.dennisthegamer.breedtimer.render.BlockLabelScanner;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
-import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
@@ -25,7 +25,7 @@ public final class BreedTimerFabric implements ClientModInitializer {
 
         WorldRenderEvents.AFTER_ENTITIES.register(context -> {
             if (context.matrixStack() == null || context.consumers() == null) return;
-            TurtleEggRenderer.render(context.matrixStack(), context.consumers(), context.camera());
+            BlockLabelScanner.render(context.matrixStack(), context.consumers(), context.camera());
         });
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
