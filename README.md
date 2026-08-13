@@ -1,30 +1,75 @@
 # BreedTimer
 
-A Minecraft mod for Fabric and NeoForge that displays floating timers above breedable animals, showing when they can breed again and how long baby animals take to grow up.
+A Minecraft mod for Fabric and NeoForge that displays floating timers above breedable animals and villagers, showing when they can breed again, how long babies take to grow up, and — when they can't breed right now — why.
 
 ## Features
 
-- Floating breed cooldown timers above animals
-- Baby growth timer display
+- Floating breed cooldown timers above animals, villagers and now also dolphins (baby only) and,
+  on `mc26.2`, sulfur cubes
+- Baby growth timer display, including tadpoles
+- Blocked-reason labels: untamed, hurt, needing to dismount, sitting, asleep, busy, scared during a
+  thunderstorm (pandas), missing a jukebox (allays), or simply unable to breed at all — the label
+  names the reason instead of a false "✓ Ready"
 - Love mode and ready-to-breed indicators
+- Optional food hints: an extra line naming what an animal or villager needs to eat before it will
+  breed (off by default)
+- Turtle egg, sniffer egg and dried ghast tracking, each with its own floating hatch-stage label
+- Beehive honey level (0–5) with a campfire-safe-to-harvest marker
+- Torchflower and pitcher crop growth stages
+- Optional chicken egg and armadillo scute drop windows, inferred from the sound and shown as a
+  narrowing window, never a countdown (off by default)
+- Exact remaining growth time on a bucketed baby axolotl, tadpole or (`mc26.2`) sulfur cube, shown
+  as a tooltip on the bucket and carried into the label when released
+- Allay duplication tracking, with an exact five-minute cooldown once a duplication is observed
+- A state filter (Ready / Cooldown / Babies / In love / Blocked) plus a block-label master switch,
+  so any combination of labels and HUD counts can be switched off
+- "Next ready in m:ss" — the compact HUD's soonest cooldown across everything tracked
+- Optional look-at-only label mode, and a toggle to hide labels through walls (labels are shown
+  through walls by default, as the mod has always drawn them)
+- Panda cub personality-odds prediction from both parents' genes, shown once a non-default outcome
+  is at least 1% likely
 - Distance-based fading and FOV culling
 - Compact mode for minimal display
-- Sound notifications when animals are ready
+- Sound notification when an animal or villager becomes ready — fires once, at the moment it
+  actually becomes ready, with adjustable volume and pitch
+- Action-bar confirmation when either keybind is pressed
+- Optional per-glyph text outline for labels, and a colour-blind (red–green) or high-contrast
+  colour preset for every label and HUD colour
+- Freely positionable HUD with named, saveable position presets, independent label/HUD background
+  opacity and an adjustable HUD text scale
 - Dedicated keybind category with toggle on/off (`N`) and compact mode (`B`)
-- Full in-game config screen (YACL + ModMenu)
+- Full in-game config screen (YACL + ModMenu), with a description on hover for every option
 - Client-side only - no server required
 
 ## Compatibility
 
-- **Minecraft**: 26.1.x
-- **Mod Loader**: Fabric (0.18.4+, requires Fabric API) or NeoForge
-- **Java**: 25+
+**This branch (`mc26.1`)**: Minecraft 26.1–26.1.2 on Fabric, 26.1.2 on NeoForge.
+
+| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
+|---|---|---|---|---|---|---|
+| Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
+
+See `docs/PORTING.md` for the full per-branch feature-availability table. Notably: the age lock
+(Golden Dandelion) is `mc26.1`/`mc26.2` only; nautilus is `mc26.1`/`mc26.2` only (the entity class
+does not exist on Minecraft 1.21.9/1.21.10, which the `mc1.21.11` branch's single jar also covers);
+camel husk is `mc26.1`, `mc26.2` and `mc1.21.11`; sulfur cube is `mc26.2` only; dolphin is not on
+`mc1.21-1.21.1`; bucket ages are not on `mc1.21.2-1.21.5`; dried ghast and happy ghast are 1.21.6 and
+up.
+
+- **Mod Loader**: Fabric (0.18.4+ on this branch, 0.19.2+ on `mc26.2`; requires Fabric API) or
+  NeoForge
+- **Java**: 25+ on this branch and `mc26.2`, 21+ on the four 1.21.x branches
 - **YACL**: Optional (for config screen)
 - **ModMenu** (Fabric only): Optional (for config screen)
 
 ## Download
 
-Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader (`breedtimer-fabric-1.5.1+mc26.1-26.1.2.jar` and `breedtimer-neoforge-1.5.1+mc26.1-26.1.2.jar`).
+Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader:
+
+- **Fabric**: `breedtimer-fabric-1.6.0+mc26.1-26.1.2.jar` — works on Minecraft 26.1 through 26.1.2.
+- **NeoForge**: `breedtimer-neoforge-1.6.0+mc26.1.2.jar` — Minecraft 26.1.2 only. NeoForge has no
+  working build for the earlier 26.1 and 26.1.1 point releases, so this is the earliest version it
+  supports in the 26.1 line.
 
 ## Installation
 
@@ -36,16 +81,28 @@ Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer)
 
 ## Configuration
 
-Open the config screen via ModMenu (Fabric) or the mod list entry (NeoForge). Settings are organized in three tabs:
+Open the config screen via ModMenu (Fabric) or the mod list entry (NeoForge). Every option shows a
+description on hover. Settings are organized in four tabs:
 
-- **General** - Enable/disable the mod, baby timers, compact mode
-- **Rendering** - Scan radius, fade distances, FOV angle, background opacity
-- **HUD** - The timer overlay can be placed freely: **Edit HUD position…** in the
-  config screen opens an editor where you drag the HUD anywhere on screen and save
+- **General** - Enable/disable the mod, show animals and villagers independently, the "Show
+  Breeding Food" hint, compact mode, whether the compact HUD counts only what is currently in view,
+  HUD background opacity and HUD text scale. This tab also holds an **Edit HUD position…** button —
+  not a separate tab — that opens an editor where you drag the HUD anywhere on screen and save
   named position presets
-- **Notifications** - Sound alerts when animals are ready
+- **Filter** - Five independent state checkboxes (Ready, Cooldown, Babies, In love, Blocked) that
+  control both floating labels and the compact HUD counts, plus "Show egg & scute timers" (the
+  chicken/armadillo drop windows, opt-in) and "Show block labels" — a master switch for turtle
+  eggs, sniffer eggs, dried ghasts, beehives and crops together
+- **Rendering** - Scan radius, fade distances, label cone angle, an optional look-at-only label
+  mode, an optional through-walls toggle (on by default, matching how the mod has always drawn), a
+  colour preset (Default / Colour-blind / High contrast), label background opacity, and an optional
+  text outline. The mod always scans at least as far as the fade-end distance, even if the scan
+  radius slider is set lower
+- **Notifications** - Sound alert when an animal or villager becomes ready, plus its volume and
+  pitch
 
-Keybinds are listed under **Controls > Breed Timer**:
+Both keybinds now show a brief action-bar confirmation when pressed. Keybinds are listed under
+**Controls > Breed Timer**:
 - `N` - Toggle mod on/off
 - `B` - Toggle compact mode
 

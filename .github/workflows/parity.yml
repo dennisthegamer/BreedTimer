@@ -1,0 +1,71 @@
+name: Cross-branch parity
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  parity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Every mixin class is registered
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          for branch in mc26.2 mc26.1 mc1.21.11 mc1.21.6-1.21.8 mc1.21.2-1.21.5 mc1.21-1.21.1; do
+            git rev-parse --verify "origin/$branch" >/dev/null 2>&1 || continue
+            cfg=$(git show "origin/$branch:common/src/main/resources/breedtimer.mixins.json")
+            for f in $(git ls-tree -r --name-only "origin/$branch" \
+                         -- common/src/main/java/de/dennisthegamer/breedtimer/mixin/); do
+              cls=$(basename "$f" .java)
+              # Nested mixins are registered as Outer$Inner; accept either form.
+              if ! printf '%s' "$cfg" | grep -q "\"$cls\"\|\"$cls\\\$"; then
+                echo "::error::$branch: mixin $cls exists but is not registered in breedtimer.mixins.json"
+                fail=1
+              fi
+            done
+          done
+          exit $fail
+
+      - name: Mixin compatibility level matches the branch Java target
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          for branch in $(python -c "import json;print(' '.join(json.load(open('.github/parity-manifest.json'))['javaTargetByBranch']))"); do
+            git rev-parse --verify "origin/$branch" >/dev/null 2>&1 || continue
+            want=$(python -c "import json;print(json.load(open('.github/parity-manifest.json'))['javaTargetByBranch']['$branch'])")
+            got=$(git show "origin/$branch:common/src/main/resources/breedtimer.mixins.json" \
+                    | python -c "import json,sys;print(json.load(sys.stdin)['compatibilityLevel'])")
+            if [ "$want" != "$got" ]; then
+              echo "::error::$branch: compatibilityLevel is $got, expected $want"
+              fail=1
+            fi
+          done
+          exit $fail
+
+      - name: Files declared identical have not drifted
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          files=$(python -c "import json;print('\n'.join(json.load(open('.github/parity-manifest.json'))['identicalAcrossBranches']))")
+          for f in $files; do
+            ref=""
+            for branch in mc26.2 mc26.1 mc1.21.11 mc1.21.6-1.21.8 mc1.21.2-1.21.5 mc1.21-1.21.1; do
+              git rev-parse --verify "origin/$branch" >/dev/null 2>&1 || continue
+              h=$(git show "origin/$branch:$f" | sha256sum | cut -d' ' -f1)
+              if [ -z "$ref" ]; then ref="$h"; refb="$branch"; continue; fi
+              if [ "$h" != "$ref" ]; then
+                echo "::error::$f differs between $refb and $branch but is declared identical"
+                fail=1
+              fi
+            done
+          done
+          exit $fail

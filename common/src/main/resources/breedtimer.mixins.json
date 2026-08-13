@@ -5,8 +5,20 @@
   "compatibilityLevel": "JAVA_25",
   "client": [
     "EntityRendererMixin",
+    "EntityRenderStateMixin",
     "AnimalEventMixin",
-    "VillagerEventMixin"
+    "EquineFeedMixin",
+    "DolphinFeedMixin",
+    "VillagerEventMixin",
+    "VillagerBreedEventMixin",
+    "FeedEventMixin$PandaFed",
+    "FeedEventMixin$TadpoleFed",
+    "FeedEventMixin$SheepAte",
+    "AllayDuplicationAccessor",
+    "SnifferDigEventMixin",
+    "BucketTooltipMixin",
+    "BucketReleaseMixin",
+    "DropSoundMixin"
   ],
   "injectors": {
     "defaultRequire": 1

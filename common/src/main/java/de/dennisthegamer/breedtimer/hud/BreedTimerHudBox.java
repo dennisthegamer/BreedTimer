@@ -1,5 +1,6 @@
 package de.dennisthegamer.breedtimer.hud;
 
+import de.dennisthegamer.breedtimer.config.BreedTimerConfig;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
 import de.dennisthegamer.hudlib.ui.HudBoxProvider;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -19,7 +20,9 @@ public class BreedTimerHudBox implements HudBoxProvider {
 
     @Override
     public float scale() {
-        return 1f; // BreedTimer hat keine Skalierung
+        // HudLib divides the screen by this and resolves the placement in the scaled space, so it
+        // has to be the same number drawPreview() and extractRenderState() push onto the pose.
+        return BreedTimerConfig.get().hudScale;
     }
 
     @Override

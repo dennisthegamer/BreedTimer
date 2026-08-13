@@ -27,6 +27,6 @@
   },
   "suggests": {
     "modmenu": ">=18.0.0-alpha.8",
-    "yet_another_config_lib": ">=3.9.2"
+    "yet_another_config_lib_v3": ">=3.9.2"
   }
 }
