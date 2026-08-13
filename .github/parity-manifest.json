@@ -1,0 +1,22 @@
+{
+  "identicalAcrossBranches": [
+    "common/src/main/java/de/dennisthegamer/breedtimer/util/BabyGrowthTracker.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/util/BreedingFoodHelper.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/util/PandaGenes.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/hud/BreedTimerSlotStore.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/mixin/AllayDuplicationAccessor.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/platform/Platform.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/platform/Platforms.java",
+    "common/src/main/java/de/dennisthegamer/breedtimer/render/StatePalette.java",
+    "common/src/main/resources/assets/breedtimer/lang/en_us.json",
+    "common/src/main/resources/assets/breedtimer/lang/de_de.json"
+  ],
+  "javaTargetByBranch": {
+    "mc26.2": "JAVA_25",
+    "mc26.1": "JAVA_25",
+    "mc1.21.11": "JAVA_21",
+    "mc1.21.6-1.21.8": "JAVA_21",
+    "mc1.21.2-1.21.5": "JAVA_21",
+    "mc1.21-1.21.1": "JAVA_21"
+  }
+}

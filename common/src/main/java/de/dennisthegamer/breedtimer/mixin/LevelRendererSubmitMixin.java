@@ -1,6 +1,6 @@
 package de.dennisthegamer.breedtimer.mixin;
 
-import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
+import de.dennisthegamer.breedtimer.render.BlockLabelScanner;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * Hooks the submit-collection phase to draw turtle egg labels. A shared mixin
+ * Hooks the submit-collection phase to draw block labels. A shared mixin
  * is used because there is no common level-render event across both loaders.
  */
 @Mixin(LevelRenderer.class)
@@ -20,6 +20,6 @@ public abstract class LevelRendererSubmitMixin {
     @Inject(method = "submitEntities", at = @At("TAIL"))
     private void breedtimer$afterSubmitEntities(PoseStack poseStack, LevelRenderState levelRenderState,
                                                 SubmitNodeCollector collector, CallbackInfo ci) {
-        TurtleEggRenderer.render(poseStack, collector, levelRenderState.cameraRenderState);
+        BlockLabelScanner.render(poseStack, collector, levelRenderState.cameraRenderState);
     }
 }
