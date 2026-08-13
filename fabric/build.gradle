@@ -55,6 +55,14 @@ dependencies {
 	include "de.dennisthegamer:hudlib-core:1.1.1"
 	implementation "de.dennisthegamer:hudlib-ui:1.1.1+mc${project.minecraft_range}"
 	include "de.dennisthegamer:hudlib-ui:1.1.1+mc${project.minecraft_range}"
+
+	testImplementation platform('org.junit:junit-bom:5.11.3')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+	useJUnitPlatform()
 }
 
 loom {

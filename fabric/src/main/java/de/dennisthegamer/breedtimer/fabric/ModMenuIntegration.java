@@ -3,11 +3,17 @@ package de.dennisthegamer.breedtimer.fabric;
 import de.dennisthegamer.breedtimer.config.BreedTimerConfigScreen;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class ModMenuIntegration implements ModMenuApi {
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
+        // YACL is optional and is not bundled, so the screen class must not be
+        // touched unless it is actually present.
+        if (!FabricLoader.getInstance().isModLoaded("yet_another_config_lib_v3")) {
+            return parent -> null;
+        }
         return BreedTimerConfigScreen::createConfigScreen;
     }
 }

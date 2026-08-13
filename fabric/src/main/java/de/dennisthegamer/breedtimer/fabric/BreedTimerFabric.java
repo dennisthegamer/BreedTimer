@@ -2,7 +2,7 @@ package de.dennisthegamer.breedtimer.fabric;
 
 import de.dennisthegamer.breedtimer.BreedTimerClient;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
-import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
+import de.dennisthegamer.breedtimer.render.BlockLabelScanner;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
@@ -27,7 +27,7 @@ public final class BreedTimerFabric implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(BreedTimerClient::onClientTick);
 
-        LevelRenderEvents.COLLECT_SUBMITS.register(context -> TurtleEggRenderer.render(
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> BlockLabelScanner.render(
                 context.poseStack(), context.submitNodeCollector(), context.levelState().cameraRenderState));
 
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->

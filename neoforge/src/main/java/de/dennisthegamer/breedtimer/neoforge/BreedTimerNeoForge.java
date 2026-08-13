@@ -3,13 +3,14 @@ package de.dennisthegamer.breedtimer.neoforge;
 import de.dennisthegamer.breedtimer.BreedTimerClient;
 import de.dennisthegamer.breedtimer.config.BreedTimerConfigScreen;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
-import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
+import de.dennisthegamer.breedtimer.render.BlockLabelScanner;
 import de.dennisthegamer.hudlib.neoforge.HudLibNeoForge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -37,7 +38,7 @@ public final class BreedTimerNeoForge {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event ->
                 BreedTimerClient.onClientTick(Minecraft.getInstance()));
 
-        NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, event -> TurtleEggRenderer.render(
+        NeoForge.EVENT_BUS.addListener(SubmitCustomGeometryEvent.class, event -> BlockLabelScanner.render(
                 event.getPoseStack(), event.getSubmitNodeCollector(), event.getLevelRenderState().cameraRenderState));
 
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingIn.class, event ->
@@ -46,7 +47,9 @@ public final class BreedTimerNeoForge {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event ->
                 BreedTimerClient.onWorldLeave());
 
-        container.registerExtensionPoint(IConfigScreenFactory.class,
-                (c, parent) -> BreedTimerConfigScreen.createConfigScreen(parent));
+        if (ModList.get().isLoaded("yet_another_config_lib_v3")) {
+            container.registerExtensionPoint(IConfigScreenFactory.class,
+                    (c, parent) -> BreedTimerConfigScreen.createConfigScreen(parent));
+        }
     }
 }
