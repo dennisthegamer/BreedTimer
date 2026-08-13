@@ -6,7 +6,17 @@
   "client": [
     "EntityRendererMixin",
     "AnimalEventMixin",
-    "VillagerEventMixin"
+    "EquineFeedMixin",
+    "VillagerEventMixin",
+    "VillagerBreedEventMixin",
+    "FeedEventMixin$PandaFed",
+    "FeedEventMixin$TadpoleFed",
+    "FeedEventMixin$SheepAte",
+    "AllayDuplicationAccessor",
+    "SnifferDigEventMixin",
+    "BucketTooltipMixin",
+    "BucketReleaseMixin",
+    "DropSoundMixin"
   ],
   "injectors": {
     "defaultRequire": 1

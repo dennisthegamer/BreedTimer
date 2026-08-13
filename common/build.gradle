@@ -16,6 +16,10 @@ dependencies {
 	// hudlib-ui: shared drag-editor/preset screens (Minecraft-referencing). modImplementation
 	// so loom remaps its MC references (named-mapped published jar) for common's dev compile.
 	modImplementation "de.dennisthegamer:hudlib-ui:1.0.9+mc1.21-1.21.8"
+
+	testImplementation platform('org.junit:junit-bom:5.11.3')
+	testImplementation 'org.junit.jupiter:junit-jupiter'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 repositories {
@@ -24,4 +28,8 @@ repositories {
 		name = 'DennisTheGamer'
 		url = 'https://dennisthegamer.github.io/maven'
 	}
+}
+
+test {
+	useJUnitPlatform()
 }
