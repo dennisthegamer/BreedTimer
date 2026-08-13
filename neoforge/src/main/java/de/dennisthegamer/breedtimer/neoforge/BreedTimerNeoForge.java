@@ -3,7 +3,7 @@ package de.dennisthegamer.breedtimer.neoforge;
 import de.dennisthegamer.breedtimer.BreedTimerClient;
 import de.dennisthegamer.breedtimer.config.BreedTimerConfigScreen;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
-import de.dennisthegamer.breedtimer.render.TurtleEggRenderer;
+import de.dennisthegamer.breedtimer.render.BlockLabelScanner;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
@@ -38,7 +38,7 @@ public final class BreedTimerNeoForge {
                 BreedTimerClient.onClientTick(Minecraft.getInstance()));
 
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.AfterEntities.class, event ->
-                TurtleEggRenderer.render(event.getPoseStack(),
+                BlockLabelScanner.render(event.getPoseStack(),
                         Minecraft.getInstance().renderBuffers().bufferSource(),
                         event.getCamera()));
 
