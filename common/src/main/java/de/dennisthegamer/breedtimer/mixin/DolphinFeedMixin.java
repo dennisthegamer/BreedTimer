@@ -3,7 +3,7 @@ package de.dennisthegamer.breedtimer.mixin;
 import de.dennisthegamer.breedtimer.util.AgeableTracking;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.animal.dolphin.Dolphin;
+import net.minecraft.world.entity.animal.Dolphin;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -33,7 +33,7 @@ public abstract class DolphinFeedMixin {
 
     @Inject(
             method = "mobInteract",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/dolphin/Dolphin;ageUp(IZ)V")
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Dolphin;ageUp(IZ)V")
     )
     private void breedtimer$onDolphinFed(Player player, InteractionHand hand,
                                          CallbackInfoReturnable<InteractionResult> cir) {

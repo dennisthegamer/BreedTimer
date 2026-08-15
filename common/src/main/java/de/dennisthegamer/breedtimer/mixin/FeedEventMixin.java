@@ -4,7 +4,7 @@ import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.animal.frog.Tadpole;
-import net.minecraft.world.entity.animal.panda.Panda;
+import net.minecraft.world.entity.animal.Panda;
 import net.minecraft.world.entity.animal.sheep.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +32,7 @@ public final class FeedEventMixin {
     public abstract static class PandaFed {
         @Inject(
                 method = "mobInteract",
-                at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/panda/Panda;ageUp(IZ)V")
+                at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/animal/Panda;ageUp(IZ)V")
         )
         private void breedtimer$onPandaFed(Player player, InteractionHand hand,
                                            CallbackInfoReturnable<InteractionResult> cir) {

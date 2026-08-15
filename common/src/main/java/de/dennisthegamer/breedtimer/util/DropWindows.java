@@ -3,11 +3,11 @@ package de.dennisthegamer.breedtimer.util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.armadillo.Armadillo;
-import net.minecraft.world.entity.animal.chicken.Chicken;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -31,9 +31,9 @@ public final class DropWindows {
 
     private DropWindows() {}
 
-    private static final Identifier CHICKEN_EGG_SOUND = Identifier.withDefaultNamespace("entity.chicken.egg");
-    private static final Identifier ARMADILLO_SCUTE_DROP_SOUND =
-            Identifier.withDefaultNamespace("entity.armadillo.scute_drop");
+    private static final ResourceLocation CHICKEN_EGG_SOUND = ResourceLocation.withDefaultNamespace("entity.chicken.egg");
+    private static final ResourceLocation ARMADILLO_SCUTE_DROP_SOUND =
+            ResourceLocation.withDefaultNamespace("entity.armadillo.scute_drop");
 
     /** Both timers reset to {@code 6000 + random.nextInt(6000)}. */
     public static final int MIN_TICKS = 6000;

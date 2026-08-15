@@ -7,7 +7,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public final class BreedTimerFabric implements ClientModInitializer {
 
@@ -19,7 +19,7 @@ public final class BreedTimerFabric implements ClientModInitializer {
         KeyBindingHelper.registerKeyBinding(BreedTimerClient.toggleCompactKey);
 
         HudElementRegistry.addLast(
-                Identifier.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
+                ResourceLocation.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
                 BreedTimerHud::render
         );
 

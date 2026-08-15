@@ -24,7 +24,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * {@code PacketProcessor} at 1.21.9, and {@code playSeededSound}'s first becomes {@code Entity} at
  * 1.21.5. TAIL is descriptor-free and survives both.
  *
- * <p>The sound is matched by {@code Identifier}, not by comparing against {@code
+ * <p>The sound is matched by {@code ResourceLocation}, not by comparing against {@code
  * SoundEvents.CHICKEN_EGG}: the packet carries a {@code Holder<SoundEvent>}, and an id comparison is
  * what stays stable across the range.
  */

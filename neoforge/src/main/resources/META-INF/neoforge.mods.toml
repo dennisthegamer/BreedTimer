@@ -18,21 +18,21 @@ config = "breedtimer.mixins.json"
 [[dependencies.breedtimer]]
 modId = "minecraft"
 type = "required"
-versionRange = "[1.21.11,1.21.12)"
+versionRange = "[1.21.9,1.21.11)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.breedtimer]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.11,)"
+versionRange = "[21.9,)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.breedtimer]]
 modId = "yet_another_config_lib_v3"
 type = "optional"
-versionRange = "[3.8.2,)"
+versionRange = "[3.8.1,)"
 ordering = "NONE"
 side = "CLIENT"
 

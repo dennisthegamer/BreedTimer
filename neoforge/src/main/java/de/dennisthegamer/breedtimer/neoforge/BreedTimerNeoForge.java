@@ -4,7 +4,7 @@ import de.dennisthegamer.breedtimer.BreedTimerClient;
 import de.dennisthegamer.breedtimer.config.BreedTimerConfigScreen;
 import de.dennisthegamer.breedtimer.render.BreedTimerHud;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -29,7 +29,7 @@ public final class BreedTimerNeoForge {
         });
 
         modBus.addListener(RegisterGuiLayersEvent.class, event -> event.registerAboveAll(
-                Identifier.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
+                ResourceLocation.fromNamespaceAndPath(BreedTimerClient.MOD_ID, "compact_hud"),
                 BreedTimerHud::render));
 
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event ->

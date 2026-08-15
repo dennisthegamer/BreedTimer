@@ -2,7 +2,7 @@ package de.dennisthegamer.breedtimer.mixin;
 
 import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import net.minecraft.world.InteractionResult;
-import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.horse.AbstractHorse;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;

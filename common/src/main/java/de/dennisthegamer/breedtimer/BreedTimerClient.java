@@ -5,7 +5,7 @@ import de.dennisthegamer.breedtimer.render.BlockLabelScanner;
 import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import de.dennisthegamer.breedtimer.util.LookTarget;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.npc.Villager;
 import de.dennisthegamer.breedtimer.util.BreedCooldownHelper.AnimalState;
 import de.dennisthegamer.breedtimer.util.BreedCooldownHelper.AnimalTimerInfo;
 import de.dennisthegamer.breedtimer.util.VillagerCooldownHelper;
@@ -15,7 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
@@ -39,7 +39,7 @@ public final class BreedTimerClient {
     public static final String MOD_ID = "breedtimer";
 
     private static final KeyMapping.Category KEYBIND_CATEGORY = KeyMapping.Category.register(
-            Identifier.fromNamespaceAndPath(MOD_ID, "breedtimer")
+            ResourceLocation.fromNamespaceAndPath(MOD_ID, "breedtimer")
     );
     public static KeyMapping toggleEnabledKey;
     public static KeyMapping toggleCompactKey;

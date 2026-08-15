@@ -22,10 +22,10 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.animal.allay.Allay;
-import net.minecraft.world.entity.animal.chicken.Chicken;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.animal.frog.Tadpole;
-import net.minecraft.world.entity.animal.panda.Panda;
-import net.minecraft.world.entity.npc.villager.Villager;
+import net.minecraft.world.entity.animal.Panda;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 
 import java.util.ArrayList;
