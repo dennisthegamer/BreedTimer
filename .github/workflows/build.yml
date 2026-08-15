@@ -28,5 +28,4 @@ jobs:
         with:
           name: Artifacts
           path: |
-            fabric/build/libs/
             neoforge/build/libs/

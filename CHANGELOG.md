@@ -91,6 +91,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > rounding instead of rounding in your favour, so the countdown and the animal stay in step.
 
 ### Added
+- **NeoForge now runs on Minecraft 1.21.9 and 1.21.10.** These two versions previously had no
+  NeoForge build at all, and the gap was assumed to be permanent. It was not. Minecraft moved two
+  things at two different versions — the render pipeline at 1.21.9 (`EntityRenderer.render` became
+  `submit`) and the entity packages at 1.21.11 (`animal.Cow` → `animal.cow.Cow`, and so on). Fabric
+  never noticed, because its intermediary mappings stay stable across the whole band, which is why
+  one Fabric jar has always covered 1.21.9–1.21.11. NeoForge jars bake in Mojang mappings at compile
+  time, so they land on one side of each boundary — and 1.21.9/1.21.10 sit between the two, matching
+  neither neighbouring build. This build closes the gap: it is the 1.21.11 code compiled against
+  pre-1.21.11 class names, so it has the newer render pipeline *and* the older entity packages.
+  Everything the mod does elsewhere it does here, minus the three mobs that do not exist before
+  1.21.11 (nautilus, zombie nautilus, camel husk). On Fabric nothing changes — keep using the
+  `+mc1.21.9-1.21.11` jar, which already covers both versions.
 - **Some babies read "🔒 Never grows up" instead of a countdown.** A skeleton horse or zombie horse
   foal never becomes an adult — vanilla holds it at baby forever — so a ticking timer that could
   never reach zero is replaced with a label that says so outright.

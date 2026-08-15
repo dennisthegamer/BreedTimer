@@ -18,7 +18,7 @@ jobs:
         run: |
           set -euo pipefail
           fail=0
-          for branch in mc26.2 mc26.1 mc1.21.11 mc1.21.6-1.21.8 mc1.21.2-1.21.5 mc1.21-1.21.1; do
+          for branch in mc26.2 mc26.1 mc1.21.11 mc1.21.9-1.21.10 mc1.21.6-1.21.8 mc1.21.2-1.21.5 mc1.21-1.21.1; do
             git rev-parse --verify "origin/$branch" >/dev/null 2>&1 || continue
             cfg=$(git show "origin/$branch:common/src/main/resources/breedtimer.mixins.json")
             for f in $(git ls-tree -r --name-only "origin/$branch" \
@@ -58,7 +58,7 @@ jobs:
           files=$(python -c "import json;print('\n'.join(json.load(open('.github/parity-manifest.json'))['identicalAcrossBranches']))")
           for f in $files; do
             ref=""
-            for branch in mc26.2 mc26.1 mc1.21.11 mc1.21.6-1.21.8 mc1.21.2-1.21.5 mc1.21-1.21.1; do
+            for branch in mc26.2 mc26.1 mc1.21.11 mc1.21.9-1.21.10 mc1.21.6-1.21.8 mc1.21.2-1.21.5 mc1.21-1.21.1; do
               git rev-parse --verify "origin/$branch" >/dev/null 2>&1 || continue
               h=$(git show "origin/$branch:$f" | sha256sum | cut -d' ' -f1)
               if [ -z "$ref" ]; then ref="$h"; refb="$branch"; continue; fi

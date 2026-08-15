@@ -18,4 +18,4 @@ pluginManagement {
 }
 
 rootProject.name = 'BreedTimer'
-include 'common', 'fabric', 'neoforge'
+include 'common', 'neoforge'

@@ -38,49 +38,71 @@ A Minecraft mod for Fabric and NeoForge that displays floating timers above bree
 - Freely positionable HUD with named, saveable position presets, independent label/HUD background
   opacity and an adjustable HUD text scale
 - Dedicated keybind category with toggle on/off (`N`) and compact mode (`B`)
-- Full in-game config screen (YACL + ModMenu), with a description on hover for every option
+- Full in-game config screen (YACL), with a description on hover for every option
 - Client-side only - no server required
 
 ## Compatibility
 
-**This branch (`mc1.21.11`)**: Minecraft 1.21.9–1.21.11 on Fabric, 1.21.11 on NeoForge.
+**This branch (`mc1.21.9-1.21.10`)**: Minecraft 1.21.9 and 1.21.10, **NeoForge only**.
 
-| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
-|---|---|---|---|---|---|---|
-| Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
+| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.9-1.21.10` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
+|---|---|---|---|---|---|---|---|
+| Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.9–1.21.10 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
+| Fabric | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ |
+| NeoForge | ✅ | ✅ | 1.21.11 only | ✅ | ✅ | ✅ | ✅ |
 
-See `docs/PORTING.md` for the full per-branch feature-availability table. Notably: the age lock
-(Golden Dandelion) is `mc26.1`/`mc26.2` only; the nautilus itself only exists from Minecraft
-1.21.11, so `mc26.1`, `mc26.2` and this branch support it — and because this branch's single jar
-also covers 1.21.9/1.21.10, it matches the mob by registry id rather than by entity class; camel
-husk is `mc26.1`, `mc26.2` and `mc1.21.11`; sulfur cube is `mc26.2` only; dolphin is not on
-`mc1.21-1.21.1`; bucket ages are not on `mc1.21.2-1.21.5`; dried ghast and happy ghast are 1.21.6 and
-up.
+**On Fabric, do not use this branch.** The `mc1.21.11` Fabric jar already covers 1.21.9 through
+1.21.11 in a single artifact, so this branch builds no Fabric jar at all — there is no Fabric
+subproject in the tree.
 
-- **Mod Loader**: Fabric (0.17.0+ on this branch, 0.19.2+ on `mc26.1`/`mc26.2`; requires Fabric API)
-  or NeoForge
-- **Java**: 21+ on this branch and the other three 1.21.x branches, 25+ on `mc26.1`/`mc26.2`
+### Why this branch exists
+
+Minecraft moved two things at two different versions:
+
+- **the render pipeline at 1.21.9** — `EntityRenderer.render` became
+  `submit(…, SubmitNodeCollector, CameraRenderState)`
+- **the entity packages at 1.21.11** — `animal.Cow` → `animal.cow.Cow`,
+  `npc.Villager` → `npc.villager.Villager`, `resources.ResourceLocation` → `resources.Identifier`
+
+Fabric is unaffected: its intermediary mappings stay stable across the whole band, which is why one
+Fabric jar spans 1.21.9–1.21.11. NeoForge jars bake in Mojang mappings at compile time, so they
+land on one side of each boundary. That leaves 1.21.9 and 1.21.10 between the two, matching neither
+neighbour — `mc1.21.6-1.21.8` has the right class names but the old render pipeline, `mc1.21.11`
+has the right render pipeline but the new class names. This branch is the `mc1.21.11` source
+compiled against pre-1.21.11 class names, which satisfies both.
+
+Neither range may be widened. This jar has 21 `net/minecraft` references that do not resolve on
+1.21.11 — the exact mirror image of the 21 that the `mc1.21.11` NeoForge jar cannot resolve here.
+
+### Feature availability
+
+See `docs/PORTING.md` for the full per-branch table. Notably: the age lock (Golden Dandelion) is
+`mc26.1`/`mc26.2` only; the nautilus, zombie nautilus and camel husk only exist from Minecraft
+1.21.11, so they are **not** available on this branch; sulfur cube is `mc26.2` only; dried ghast and
+happy ghast are present here (1.21.6 and up); dolphin growth and bucket ages are both present here.
+
+- **Mod Loader**: NeoForge (see above for Fabric)
+- **Java**: 21+ on this branch and the other 1.21.x branches, 25+ on `mc26.1`/`mc26.2`
 - **YACL**: Optional (for config screen)
-- **ModMenu** (Fabric only): Optional (for config screen)
 
 ## Download
 
-Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader:
+Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). This branch releases a single JAR:
 
-- **Fabric**: `breedtimer-fabric-1.6.0+mc1.21.9-1.21.11.jar` — works on Minecraft 1.21.9 through 1.21.11.
-- **NeoForge**: `breedtimer-neoforge-1.6.0+mc1.21.11.jar` — Minecraft 1.21.11 only. NeoForge jars bake in Mojang mappings at compile time (unlike Fabric's version-stable intermediary), and 1.21.11 reorganized several entity classes into new packages, so there is no NeoForge build for 1.21.9/1.21.10.
+- **NeoForge**: `breedtimer-neoforge-1.6.0+mc1.21.9-1.21.10.jar` — Minecraft 1.21.9 and 1.21.10.
+- **Fabric**: not built here. Use `breedtimer-fabric-1.6.0+mc1.21.9-1.21.11.jar` from the
+  `mc1.21.11` release — that one jar already covers 1.21.9 and 1.21.10.
 
 ## Installation
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) or [NeoForge](https://neoforged.net/)
-2. On Fabric: download [Fabric API](https://modrinth.com/mod/fabric-api)
-3. Download BreedTimer (the JAR matching your loader)
-4. Place the JAR file(s) in your `mods` folder
-5. Launch Minecraft
+1. Install [NeoForge](https://neoforged.net/)
+2. Download `breedtimer-neoforge-1.6.0+mc1.21.9-1.21.10.jar`
+3. Place the JAR file in your `mods` folder
+4. Launch Minecraft
 
 ## Configuration
 
-Open the config screen via ModMenu (Fabric) or the mod list entry (NeoForge). Every option shows a
+Open the config screen via the NeoForge mod list entry. Every option shows a
 description on hover. Settings are organized in four tabs:
 
 - **General** - Enable/disable the mod, show animals and villagers independently, the "Show
@@ -125,7 +147,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Credits
 
 - **Author**: Dennis_thegamer
-- **Built with**: Fabric, Fabric API, NeoForge, YACL
+- **Built with**: NeoForge, YACL (Architectury multiloader project; this branch builds the NeoForge target only)
 
 ## Support
 

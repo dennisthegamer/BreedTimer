@@ -130,26 +130,28 @@ Configure everything in-game via ModMenu — every option shows a description on
 
 ## Requirements
 
-**This build**: Minecraft 1.21.9–1.21.11 on Fabric, 1.21.11 on NeoForge, Java 21+.
+**This build**: Minecraft 1.21.9 and 1.21.10, **NeoForge only**, Java 21+.
 
-BreedTimer 1.6.0 is available for Minecraft 1.21 through 26.2, across six version-matched builds:
+> **On Fabric, download the 1.21.9–1.21.11 build instead.** That single Fabric jar already covers
+> 1.21.9 and 1.21.10, so there is deliberately no Fabric jar for this build.
 
-| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
-|---|---|---|---|---|---|---|
-| Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
-| Java | 25+ | 25+ | 21+ | 21+ | 21+ | 21+ |
+BreedTimer 1.6.0 is available for Minecraft 1.21 through 26.2, across seven version-matched builds:
 
-Some features are version-gated: age lock (Golden Dandelion) is `mc26.1`/`mc26.2` only; the nautilus
-itself only exists from Minecraft 1.21.11, so `mc26.1`, `mc26.2` and this build support it — and
-because this build's single jar also covers 1.21.9/1.21.10, it matches the mob by registry id rather
-than by entity class; camel husk is `mc26.1`, `mc26.2` and `mc1.21.11`;
-sulfur cube is `mc26.2` only; dolphin is not on `mc1.21-1.21.1`; bucket ages are not on
-`mc1.21.2-1.21.5`; dried ghast and happy ghast are 1.21.6 and up. See the GitHub repository's
-`docs/PORTING.md` for the full table.
+| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.9-1.21.10` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
+|---|---|---|---|---|---|---|---|
+| Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.9–1.21.10 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
+| Fabric | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ |
+| NeoForge | ✅ | ✅ | 1.21.11 only | ✅ | ✅ | ✅ | ✅ |
+| Java | 25+ | 25+ | 21+ | 21+ | 21+ | 21+ | 21+ |
 
-- **Mod Loader**: Fabric (0.17.0+ on this build, 0.19.2+ on 26.x; requires Fabric API) or NeoForge
+Some features are version-gated: age lock (Golden Dandelion) is `mc26.1`/`mc26.2` only; the nautilus,
+zombie nautilus and camel husk only exist from Minecraft 1.21.11 and are therefore **not** in this
+build; sulfur cube is `mc26.2` only; dolphin is not on `mc1.21-1.21.1`; bucket ages are not on
+`mc1.21.2-1.21.5`; dried ghast and happy ghast are 1.21.6 and up, so both are in this build. See the
+GitHub repository's `docs/PORTING.md` for the full table.
+
+- **Mod Loader**: NeoForge
 - **YACL**: Optional (for in-game config screen)
-- **ModMenu** (Fabric only): Optional (for in-game config screen)
 
 ## Perfect For
 
