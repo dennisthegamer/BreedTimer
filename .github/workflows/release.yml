@@ -78,13 +78,28 @@ jobs:
           fetch-depth: 0
 
       - name: Download build artifacts
+        # upload-artifact roots the zip at the common ancestor of the uploaded
+        # files. This branch uploads only neoforge/build/libs/, so the jars sit
+        # at the zip root and have to be unpacked back into that directory --
+        # unpacking into "." would leave every path below out of reach.
         uses: actions/download-artifact@v4
         with:
           name: build-artifacts-${{ needs.build.outputs.mod_version }}
-          path: .
+          path: neoforge/build/libs
 
       - name: Remove intermediate jars
         run: rm -f neoforge/build/libs/*-dev-shadow.jar neoforge/build/libs/*-sources.jar
+
+      - name: Verify the release jar is present
+        run: |
+          shopt -s nullglob
+          jars=(neoforge/build/libs/breedtimer-neoforge-*.jar)
+          if [ ${#jars[@]} -eq 0 ]; then
+            echo "::error::No NeoForge jar to attach - the release would be published empty"
+            ls -R neoforge/build/libs || true
+            exit 1
+          fi
+          printf 'attaching: %s\n' "${jars[@]}"
 
       - name: Extract changelog for version
         id: changelog
