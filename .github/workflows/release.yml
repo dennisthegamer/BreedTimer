@@ -1,5 +1,5 @@
 # Automatically create GitHub releases with build artifacts
-# for every push to the mc1.21.9-1.21.10 branch
+# for every push to the mc1.21.9-1.21.10-neoforge branch
 #
 # NeoForge only. This branch has no Fabric subproject: the mc1.21.11 branch already ships one
 # Fabric jar covering 1.21.9-1.21.11, so there is nothing for a second Fabric artifact to add.
@@ -9,7 +9,7 @@ name: Release
 on:
   push:
     branches:
-      - mc1.21.9-1.21.10
+      - mc1.21.9-1.21.10-neoforge
 
 jobs:
   build:

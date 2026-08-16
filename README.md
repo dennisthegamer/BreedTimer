@@ -43,9 +43,9 @@ A Minecraft mod for Fabric and NeoForge that displays floating timers above bree
 
 ## Compatibility
 
-**This branch (`mc1.21.9-1.21.10`)**: Minecraft 1.21.9 and 1.21.10, **NeoForge only**.
+**This branch (`mc1.21.9-1.21.10-neoforge`)**: Minecraft 1.21.9 and 1.21.10, **NeoForge only**.
 
-| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.9-1.21.10` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
+| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.9-1.21.10-neoforge` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
 |---|---|---|---|---|---|---|---|
 | Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.9–1.21.10 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
 | Fabric | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ |

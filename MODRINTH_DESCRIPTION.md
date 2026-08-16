@@ -137,7 +137,7 @@ Configure everything in-game via ModMenu — every option shows a description on
 
 BreedTimer 1.6.0 is available for Minecraft 1.21 through 26.2, across seven version-matched builds:
 
-| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.9-1.21.10` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
+| | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.9-1.21.10-neoforge` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
 |---|---|---|---|---|---|---|---|
 | Minecraft | 26.2 | 26.1–26.1.2 | 1.21.9–1.21.11 | 1.21.9–1.21.10 | 1.21.6–1.21.8 | 1.21.2–1.21.5 | 1.21–1.21.1 |
 | Fabric | ✅ | ✅ | ✅ | — | ✅ | ✅ | ✅ |
