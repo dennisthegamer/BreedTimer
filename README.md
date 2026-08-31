@@ -67,8 +67,8 @@ up.
 
 Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader:
 
-- **Fabric**: `breedtimer-fabric-1.6.0+mc1.21.9-1.21.11.jar` — works on Minecraft 1.21.9 through 1.21.11.
-- **NeoForge**: `breedtimer-neoforge-1.6.0+mc1.21.11.jar` — Minecraft 1.21.11 only. NeoForge jars bake in Mojang mappings at compile time (unlike Fabric's version-stable intermediary), and 1.21.11 reorganized several entity classes into new packages, so there is no NeoForge build for 1.21.9/1.21.10.
+- **Fabric**: `breedtimer-fabric-1.6.1+mc1.21.9-1.21.11.jar` — works on Minecraft 1.21.9 through 1.21.11.
+- **NeoForge**: `breedtimer-neoforge-1.6.1+mc1.21.11.jar` — Minecraft 1.21.11 only. NeoForge jars bake in Mojang mappings at compile time (unlike Fabric's version-stable intermediary), and 1.21.11 reorganized several entity classes into new packages, so there is no NeoForge build for 1.21.9/1.21.10.
 
 ## Installation
 
