@@ -3,6 +3,7 @@ package de.dennisthegamer.breedtimer.mixin;
 import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,6 +14,28 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Animal.class)
 public abstract class AnimalEventMixin {
+
+    /**
+     * Fires when the local player offers food to an animal, before the game has decided anything.
+     *
+     * <p>{@code HEAD} rather than a branch inside: for an adult the client walks the whole method
+     * and returns {@code CONSUME} without ever calling anything species-specific, so there is no
+     * later instruction that means "this feed was offered". Whether the server accepts is answered
+     * by the hearts that do or do not arrive afterwards -- see {@code FeedProbe}.
+     *
+     * <p>Not gated on {@code isFood} here: {@code BreedCooldownHelper.onFeedAttempt} needs the
+     * animal anyway, and an unanswered probe on an animal that was never fed food costs nothing
+     * because a wrong item cannot produce hearts either.
+     */
+    @Inject(method = "mobInteract", at = @At("HEAD"))
+    private void breedtimer$onFeedOffered(Player player, InteractionHand hand,
+                                          CallbackInfoReturnable<InteractionResult> cir) {
+        Animal self = (Animal) (Object) this;
+        if (!self.level().isClientSide()) return;
+        if (player != Minecraft.getInstance().player) return;
+        if (!self.isFood(player.getItemInHand(hand))) return;
+        BreedCooldownHelper.onFeedAttempt(self);
+    }
 
     @Inject(method = "handleEntityEvent", at = @At("HEAD"))
     private void breedtimer$onEntityEvent(byte id, CallbackInfo ci) {

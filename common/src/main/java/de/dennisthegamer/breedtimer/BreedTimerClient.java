@@ -80,8 +80,8 @@ public final class BreedTimerClient {
 
     public static void onWorldJoin(ClientPacketListener handler) {
         WorldIdentity identity = resolveWorldIdentity(handler);
-        BreedCooldownHelper.onWorldJoin(identity.id(), identity.legacyId());
-        VillagerCooldownHelper.onWorldJoin(identity.id(), identity.legacyId());
+        BreedCooldownHelper.onWorldJoin(identity.id(), identity.legacyId(), identity.worldDir());
+        VillagerCooldownHelper.onWorldJoin(identity.id(), identity.legacyId(), identity.worldDir());
     }
 
     public static void onWorldLeave() {
@@ -101,11 +101,13 @@ public final class BreedTimerClient {
      * different file than {@code id} -- multiplayer and the "unknown" fallback never differ from
      * their own id, so they always pass null, meaning "nothing to migrate".
      */
-    private record WorldIdentity(String id, String legacyId) {}
+    private record WorldIdentity(String id, String legacyId, Path worldDir) {}
 
     private static WorldIdentity resolveWorldIdentity(ClientPacketListener handler) {
         var serverData = handler.getServerData();
-        if (serverData != null) return new WorldIdentity(sanitize(serverData.ip), null);
+        // Multiplayer: no world folder within reach, so the config directory keyed by server
+        // address stays the only option.
+        if (serverData != null) return new WorldIdentity(sanitize(serverData.ip), null, null);
         Minecraft mc = Minecraft.getInstance();
         if (mc.getSingleplayerServer() != null) {
             // The world's save-folder name. Unlike the display name below, two worlds can never
@@ -122,9 +124,12 @@ public final class BreedTimerClient {
             // most worlds the folder name and the level name are the same string, so this equals
             // id and no migration is needed.
             String legacyId = sanitize(mc.getSingleplayerServer().getWorldData().getLevelSettings().levelName());
-            return new WorldIdentity(id, legacyId.equals(id) ? null : legacyId);
+            // The folder itself, not just its name: state written inside it follows the world through
+            // copies, junctions and instance switches, and cannot be claimed by a same-named world in
+            // another instance -- see WorldSaveMigration for the collision this replaces.
+            return new WorldIdentity(id, legacyId.equals(id) ? null : legacyId, root);
         }
-        return new WorldIdentity("unknown", null);
+        return new WorldIdentity("unknown", null, null);
     }
 
     private static String sanitize(String name) {

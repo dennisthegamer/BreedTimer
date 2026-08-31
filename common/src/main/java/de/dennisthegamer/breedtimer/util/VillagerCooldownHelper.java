@@ -47,10 +47,19 @@ public class VillagerCooldownHelper {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path SAVE_DIR = Platforms.get().getConfigDir().resolve("breedtimer");
 
+    /**
+     * The singleplayer world's own folder, or null in multiplayer. Resolved at join time and
+     * kept, because {@code onWorldLeave} saves after the integrated server is already going
+     * away -- asking for the path then would be too late.
+     */
+    private static Path currentWorldDir;
+
     /** Villagers currently courting, counting down to the birth that starts their cooldown. */
     private static final Map<UUID, Integer> courtshipMap = new HashMap<>();
     private static final Map<UUID, Integer> cooldownMap = new HashMap<>();
     private static final BabyGrowthTracker babyGrowth = new BabyGrowthTracker();
+    /** Births seen in the last few ticks, so a courtship is credited only where one happened. */
+    private static final VillagerBirths births = new VillagerBirths();
     private static String currentWorldId = null;
     /** F-1 migration: the id this world's save file used to live under, or null if none applies. */
     private static String legacyWorldId = null;
@@ -74,6 +83,15 @@ public class VillagerCooldownHelper {
         READY,
         COOLDOWN,
         BABY,
+        /**
+         * Courting: the pair has agreed and the child is on its way. {@code VillagerMakeLove.start()}
+         * broadcasts entity event 18 to <em>both</em> partners -- unlike the animal case, where only
+         * the goal owner is told -- so the mod knows both of them from the moment the courtship
+         * begins, and it lasts 275 to 324 ticks. Without this the pair read "Ready" for a quarter of
+         * a minute and then jumped straight to a five-minute countdown, and the ready chime fired
+         * for villagers that were already spoken for.
+         */
+        COURTSHIP,
         /** Adult that cannot breed right now. Currently only one cause reaches the client: asleep. */
         BLOCKED
     }
@@ -86,12 +104,16 @@ public class VillagerCooldownHelper {
      * @param worldId       the world's current (save-folder, for singleplayer) id
      * @param legacyWorldId the id this world's save file used to live under before F-1, or null if
      *                      the two ids coincide -- see {@link WorldSaveMigration}
+     * @param worldDir      the singleplayer world's save folder, or null in multiplayer, where the
+     *                      world is not a folder we can reach -- see {@link WorldSaveMigration}
      */
-    public static void onWorldJoin(String worldId, String legacyWorldId) {
+    public static void onWorldJoin(String worldId, String legacyWorldId, Path worldDir) {
         currentWorldId = worldId;
+        currentWorldDir = worldDir;
         VillagerCooldownHelper.legacyWorldId = legacyWorldId;
         courtshipMap.clear();
         cooldownMap.clear();
+        births.clear();
         babyGrowth.clear();
         lastGameTime = -1;
         loadData();
@@ -103,13 +125,25 @@ public class VillagerCooldownHelper {
         legacyWorldId = null;
         courtshipMap.clear();
         cooldownMap.clear();
+        births.clear();
         babyGrowth.clear();
         lastGameTime = -1;
     }
 
     // ── Persistence ──────────────────────────────────────────────────────────
 
+    /**
+     * Where this world's state is written. Singleplayer keeps it inside the world folder, so it
+     * travels with the world and cannot collide with a same-named world in another instance;
+     * multiplayer has no such folder and stays in the config directory, keyed by server address.
+     */
     private static Path getSaveFile() {
+        if (currentWorldDir != null) return currentWorldDir.resolve("breedtimer").resolve("villagers.json");
+        return SAVE_DIR.resolve(currentWorldId + "_villagers.json");
+    }
+
+    /** The config-directory file this world's state was written to before it moved in-world. */
+    private static Path getConfigSaveFile() {
         return SAVE_DIR.resolve(currentWorldId + "_villagers.json");
     }
 
@@ -120,7 +154,7 @@ public class VillagerCooldownHelper {
 
     private static void saveData() {
         try {
-            Files.createDirectories(SAVE_DIR);
+            Files.createDirectories(getSaveFile().getParent());
             Map<String, Map<String, Integer>> data = new HashMap<>();
             data.put("cooldown", uuidMapToString(cooldownMap));
             data.put("baby", uuidMapToString(babyGrowth.snapshot()));
@@ -132,10 +166,11 @@ public class VillagerCooldownHelper {
     }
 
     private static void loadData() {
-        // F-1 migration: load the current id's file if it exists, else fall back to the legacy id's
-        // file (see WorldSaveMigration). Writes always target getSaveFile() -- the legacy file, if
-        // read, is left untouched.
-        Path file = WorldSaveMigration.resolveLoadFile(getSaveFile(), getLegacySaveFile());
+        // Newest location first, then each older one this world might still be sitting in: the
+        // world folder, then the config file keyed by save-folder name, then the pre-F-1 one keyed
+        // by level name. Writes always target getSaveFile() -- older files are left untouched.
+        Path file = WorldSaveMigration.resolveLoadFile(
+                getSaveFile(), getConfigSaveFile(), getLegacySaveFile());
         if (!Files.exists(file)) return;
         try {
             String json = Files.readString(file);
@@ -180,6 +215,34 @@ public class VillagerCooldownHelper {
      */
     public static void onCourtshipStart(AbstractVillager villager) {
         courtshipMap.put(villager.getUUID(), COURTSHIP_TICKS);
+    }
+
+    /**
+     * How far a parent may stand from its newborn at the instant it appears, squared. The child is
+     * placed exactly on one parent by {@code snapTo}, and {@code VillagerMakeLove.tick()} only
+     * breeds while the pair is within {@code sqrt(5)} blocks, so three blocks reaches both of them
+     * and stops at the cell next door.
+     */
+    private static final double BIRTH_RADIUS = 3.0;
+
+    /**
+     * A newborn villager announced itself. {@code VillagerMakeLove.breed()} broadcasts entity event
+     * 12 to the child alone, immediately after {@code snapTo} has placed it on one of its parents,
+     * so the villagers courting around this spot right now are its parents.
+     *
+     * <p>The pairing is decided here rather than when the courtship timer runs out, and that is the
+     * whole point: vanilla gives birth 275 to 324 ticks into a courtship the mod checks at 325, so
+     * up to fifty ticks pass in between and either parent can have walked away from the spot by
+     * then. Measuring at that point cost a pair that really had bred its cooldown.
+     */
+    public static void onNewbornVillager(AbstractVillager child) {
+        AABB box = child.getBoundingBox().inflate(BIRTH_RADIUS);
+        List<UUID> parents = new ArrayList<>();
+        for (Villager nearby : child.level().getEntitiesOfClass(Villager.class, box)) {
+            if (nearby.isBaby()) continue;
+            if (courtshipMap.containsKey(nearby.getUUID())) parents.add(nearby.getUUID());
+        }
+        births.witnessed(parents);
     }
 
     /**
@@ -240,11 +303,12 @@ public class VillagerCooldownHelper {
         courtshipMap.entrySet().removeIf(entry -> {
             entry.setValue(entry.getValue() - delta);
             if (entry.getValue() > 0) return false;
-            if (sawNewbornVillager(loadedEntities)) {
+            if (births.claim(entry.getKey())) {
                 cooldownMap.put(entry.getKey(), BREED_COOLDOWN_TICKS);
             }
             return true;
         });
+
 
         // Breed cooldown countdown (paused while the entity is unloaded)
         cooldownMap.entrySet().removeIf(entry -> {
@@ -266,26 +330,6 @@ public class VillagerCooldownHelper {
         }
     }
 
-    /** A baby villager young enough to be the child this courtship was heading towards. */
-    private static final int NEWBORN_TICK_WINDOW = 40;
-
-    /**
-     * Whether a freshly spawned baby villager is loaded. Unlike the animal case, the child here
-     * appears a full tick or more after the courtship timer runs out, so a generous window is safe:
-     * VillagerMakeLove.breed() also broadcasts event 12 to the child alone, and no other path
-     * creates a baby villager next to a pair we were tracking.
-     */
-    private static boolean sawNewbornVillager(List<Entity> loadedEntities) {
-        for (Entity entity : loadedEntities) {
-            if (entity instanceof Villager villager
-                    && villager.isBaby()
-                    && villager.tickCount <= NEWBORN_TICK_WINDOW) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     // ── State queries ────────────────────────────────────────────────────────
 
     /** As {@code BreedCooldownHelper.isShown(AnimalState)}; a villager's BLOCKED is always "asleep". */
@@ -295,6 +339,9 @@ public class VillagerCooldownHelper {
             case READY -> config.showReady;
             case COOLDOWN -> config.showCooldown;
             case BABY -> config.showBabyTimer;
+            // Rides on the animals' in-love flag: it is the same thing happening, and a separate
+            // toggle for villagers alone would be a setting nobody asked for.
+            case COURTSHIP -> config.showInLove;
             case BLOCKED -> config.showBlocked;
         };
     }
@@ -314,6 +361,14 @@ public class VillagerCooldownHelper {
             int seconds = remaining / 20;
             int color = seconds > 180 ? p.coolFar : seconds > 60 ? p.coolMid : p.coolNear;
             return new VillagerTimerInfo(villager, VillagerState.COOLDOWN, remaining, color);
+        }
+
+        // Before the sleep gate and before "ready": a courting villager is neither. No countdown is
+        // shown even though courtshipMap holds one, for the same reason the animals' "In Love" shows
+        // none -- the courtship can be cut short by the partner dying, being led away or never
+        // closing the distance, so the number would be a promise the mod cannot keep.
+        if (courtshipMap.containsKey(uuid)) {
+            return new VillagerTimerInfo(villager, VillagerState.COURTSHIP, 0, p.love);
         }
 
         // Villager.canBreed() = foodLevel + food in inventory >= 12, && !isSleeping() && age == 0.

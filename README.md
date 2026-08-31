@@ -89,14 +89,14 @@ happy ghast are present here (1.21.6 and up); dolphin growth and bucket ages are
 
 Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). This branch releases a single JAR:
 
-- **NeoForge**: `breedtimer-neoforge-1.6.0+mc1.21.9-1.21.10.jar` — Minecraft 1.21.9 and 1.21.10.
-- **Fabric**: not built here. Use `breedtimer-fabric-1.6.0+mc1.21.9-1.21.11.jar` from the
+- **NeoForge**: `breedtimer-neoforge-1.6.1+mc1.21.9-1.21.10.jar` — Minecraft 1.21.9 and 1.21.10.
+- **Fabric**: not built here. Use `breedtimer-fabric-1.6.1+mc1.21.9-1.21.11.jar` from the
   `mc1.21.11` release — that one jar already covers 1.21.9 and 1.21.10.
 
 ## Installation
 
 1. Install [NeoForge](https://neoforged.net/)
-2. Download `breedtimer-neoforge-1.6.0+mc1.21.9-1.21.10.jar`
+2. Download `breedtimer-neoforge-1.6.1+mc1.21.9-1.21.10.jar`
 3. Place the JAR file in your `mods` folder
 4. Launch Minecraft
 
