@@ -73,6 +73,7 @@
   "breedtimer.state.ready": "✓ Bereit",
   "breedtimer.state.allay_not_ready": "Nicht bereit",
   "breedtimer.state.allay_needs_jukebox": "Braucht einen Plattenspieler",
+  "breedtimer.state.cooldown_uncertain": "%s",
   "breedtimer.state.in_love": "❤ Verliebt!",
   "breedtimer.state.growing": "Wächst: %s",
   "breedtimer.state.growing_soon": "Fast ausgewachsen",
