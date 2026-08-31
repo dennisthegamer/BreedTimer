@@ -5,6 +5,40 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.1] - 2026-08-31
+
+### Fixed
+
+- **Breeding a whole pen at once no longer scrambles the timers.** Feeding several animals of the
+  same kind together could pin a breeding on the wrong partner, so the one that really bred read
+  "Ready" while the game still had it on a five-minute cooldown. The mod now waits for the newborn
+  and identifies the partner by where the animal was looking, because the game aims an animal's head
+  at the one it is about to breed with. (Thanks for the report!)
+- **Timers no longer jump back up to five minutes.** When two pairs bred a few seconds apart, an
+  animal suspected by the first birth was suspected again by the second and its countdown restarted
+  from the top — with four animals in a pen, three of them visibly reset. Naming the partner removes
+  the cause, and animals long out of sight are now forgotten properly instead of being dragged into
+  later breedings.
+- **A fed animal's countdown no longer jumps backwards.** Offering food to an animal already on a
+  known cooldown could replace the measured time with an older, shorter estimate, dropping the timer
+  by up to a minute. The longer of the two is now kept.
+- **Villagers show that they are courting.** A pair agreeing to breed read "Ready" for a quarter of
+  a minute — chime included — and then jumped straight to five minutes. They now show "In Love!"
+  like animals do.
+- **Villager cooldowns are credited to the pair that earned them.** The birth is now read from the
+  newborn's own arrival, which the game announces where its parents are standing, rather than from a
+  search for any baby villager that looked recent enough. That search went wrong both ways: one
+  birth could hand cooldowns to villagers with no part in it, while a pair whose child arrived early
+  got none at all.
+- **Timers follow the world instead of the installation.** Singleplayer state now lives in the world
+  folder rather than the mod's config directory, which filed it under the world's folder name —
+  unique within one installation but not across several, so instances sharing a config directory
+  loaded each other's timers. State now travels with the world, and an existing save is carried over
+  the first time the world is opened.
+- **"In Love!" no longer sticks after a pair has bred.** The label could keep showing love mode for
+  up to half a minute, because the mod's own love countdown outlived the game's. A known cooldown
+  now takes precedence over it.
+
 ## [1.6.0] - 2026-08-06
 
 ### Fixed

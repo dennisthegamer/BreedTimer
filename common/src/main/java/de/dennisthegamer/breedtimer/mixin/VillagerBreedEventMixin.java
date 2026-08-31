@@ -23,7 +23,15 @@ public abstract class VillagerBreedEventMixin {
     @Inject(method = "handleEntityEvent", at = @At("HEAD"))
     private void breedtimer$onVillagerEvent(byte id, CallbackInfo ci) {
         Villager self = (Villager) (Object) this;
-        if (!self.level().isClientSide() || self.isBaby()) return;
+        if (!self.level().isClientSide()) return;
+
+        // A birth, announced on the child itself: breed() broadcasts 12 to it alone, right after
+        // snapTo has put it on one of its parents. This is the only event either parent is not told
+        // about, and it is the one that says a courtship really produced something.
+        if (self.isBaby()) {
+            if (id == 12) VillagerCooldownHelper.onNewbornVillager(self);
+            return;
+        }
 
         if (id == 18) {
             VillagerCooldownHelper.onCourtshipStart(self);

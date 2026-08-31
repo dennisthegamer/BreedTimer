@@ -132,7 +132,7 @@ Configure everything in-game via ModMenu — every option shows a description on
 
 **This build**: Minecraft 1.21.6–1.21.8, Fabric and NeoForge, Java 21+.
 
-BreedTimer 1.6.0 is available for Minecraft 1.21 through 26.2, across six version-matched builds:
+BreedTimer 1.6.1 is available for Minecraft 1.21 through 26.2, across six version-matched builds:
 
 | | `mc26.2` | `mc26.1` | `mc1.21.11` | `mc1.21.6-1.21.8` | `mc1.21.2-1.21.5` | `mc1.21-1.21.1` |
 |---|---|---|---|---|---|---|

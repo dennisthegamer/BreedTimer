@@ -45,6 +45,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.phys.Vec3;
 
 import com.google.gson.Gson;
@@ -80,6 +81,13 @@ public class BreedCooldownHelper {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path SAVE_DIR = Platforms.get().getConfigDir().resolve("breedtimer");
+
+    /**
+     * The singleplayer world's own folder, or null in multiplayer. Resolved at join time and
+     * kept, because {@code onWorldLeave} saves after the integrated server is already going
+     * away -- asking for the path then would be too late.
+     */
+    private static Path currentWorldDir;
 
     // Client-side tracking using UUID (persistent across sessions)
     private static final Map<UUID, Integer> cooldownMap = new HashMap<>();
@@ -234,6 +242,50 @@ public class BreedCooldownHelper {
         }
     }
 
+    /**
+     * Entity events 18 whose meaning is not settled yet -- see {@link BreedingAttribution} for why
+     * that question cannot be answered the moment the packet arrives.
+     */
+    private static final BreedingAttribution breedingAttribution = new BreedingAttribution();
+
+    /**
+     * Feeds the local player has made whose answer is still outstanding -- see {@link FeedProbe}.
+     */
+    private static final FeedProbe feedProbe = new FeedProbe();
+
+    /**
+     * Adults that may be on a cooldown, with the time that cooldown would have left. Written when a
+     * breeding is observed but the mate cannot be named, so its candidates stop reading "Ready"
+     * while the mod has real reason to doubt it. Promoted into {@link #cooldownMap} once a refused
+     * feed proves the doubt right, and dropped once hearts prove it wrong.
+     */
+    private static final Map<UUID, Integer> maybeCooldown = new HashMap<>();
+
+    /**
+     * Where each animal's head was pointing as its entity event 18 arrived, kept until that event is
+     * settled -- see {@link MateBearing} for why that names the mate. Read at the verdict rather
+     * than at the event because the verdict is where the candidates are known, and captured at the
+     * event rather than at the verdict because {@code resetLove()} ends the breeding goal and lets
+     * the head start drifting the moment the breeding is done.
+     *
+     * <p>Lifecycle is tied to {@link #breedingAttribution}: every path that resolves a pending event
+     * drops its entry here too, and {@link #onWorldJoin} clears both.
+     */
+    private static final Map<UUID, Float> eventHeadYaw = new HashMap<>();
+
+    /**
+     * The distance both of vanilla's breeding systems require at the instant they actually breed,
+     * squared. {@code BreedGoal.tick} gates on {@code distanceToSqr(partner) < 9.0}, and
+     * {@code AnimalMakeLove} -- the brain behaviour armadillos, camels, sniffers, frogs and hoglins
+     * use instead of a goal -- gates on {@code closerThan(partner, 3.0)}, which is the same number.
+     *
+     * <p>Deliberately not {@link #MATE_SEARCH_RADIUS}: that mirrors {@code BreedGoal.getFreePartner},
+     * which chooses the partner up to 60 ticks before the pair breeds, at positions neither animal
+     * still holds by the time the client hears about it.
+     */
+    private static final double MATE_BREED_DISTANCE = 3.0;
+    private static final double MATE_BREED_DISTANCE_SQ = MATE_BREED_DISTANCE * MATE_BREED_DISTANCE;
+
     /** Buckets the local player has just emptied, waiting for the mob to stream in; see {@link #tick}. */
     private static final List<PendingRelease> pendingReleases = new ArrayList<>();
     /** Same window the allay child match uses, and for the same reason: one batch of packets, held for a second. */
@@ -311,10 +363,16 @@ public class BreedCooldownHelper {
     }
 
     public record AnimalTimerInfo(Animal animal, AnimalState state, int remainingTicks, int color,
-                                  BlockReason blockReason) {
+                                  BlockReason blockReason, boolean uncertain) {
         /** For every state other than {@link AnimalState#BLOCKED}, which is the only one with a reason. */
         public AnimalTimerInfo(Animal animal, AnimalState state, int remainingTicks, int color) {
-            this(animal, state, remainingTicks, color, null);
+            this(animal, state, remainingTicks, color, null, false);
+        }
+
+        /** A blocked animal, whose reason is read off values the server syncs -- never a guess. */
+        public AnimalTimerInfo(Animal animal, AnimalState state, int remainingTicks, int color,
+                               BlockReason blockReason) {
+            this(animal, state, remainingTicks, color, blockReason, false);
         }
     }
 
@@ -322,9 +380,12 @@ public class BreedCooldownHelper {
      * @param worldId       the world's current (save-folder, for singleplayer) id
      * @param legacyWorldId the id this world's save file used to live under before F-1, or null if
      *                      the two ids coincide -- see {@link WorldSaveMigration}
+     * @param worldDir      the singleplayer world's save folder, or null in multiplayer, where the
+     *                      world is not a folder we can reach -- see {@link WorldSaveMigration}
      */
-    public static void onWorldJoin(String worldId, String legacyWorldId) {
+    public static void onWorldJoin(String worldId, String legacyWorldId, Path worldDir) {
         currentWorldId = worldId;
+        currentWorldDir = worldDir;
         BreedCooldownHelper.legacyWorldId = legacyWorldId;
         cooldownMap.clear();
         loveMap.clear();
@@ -343,6 +404,10 @@ public class BreedCooldownHelper {
         pendingDuplications.clear();
         unexplainedAllays.clear();
         pendingReleases.clear();
+        breedingAttribution.clear();
+        feedProbe.clear();
+        eventHeadYaw.clear();
+        maybeCooldown.clear();
         unseenTicks.clear();
         pendingGrassMeal.clear();
         BreedingFoodHelper.clear();
@@ -374,6 +439,10 @@ public class BreedCooldownHelper {
         pendingDuplications.clear();
         unexplainedAllays.clear();
         pendingReleases.clear();
+        breedingAttribution.clear();
+        feedProbe.clear();
+        eventHeadYaw.clear();
+        maybeCooldown.clear();
         unseenTicks.clear();
         pendingGrassMeal.clear();
         BreedingFoodHelper.clear();
@@ -381,7 +450,18 @@ public class BreedCooldownHelper {
         lastGameTime = -1;
     }
 
+    /**
+     * Where this world's state is written. Singleplayer keeps it inside the world folder, so it
+     * travels with the world and cannot collide with a same-named world in another instance;
+     * multiplayer has no such folder and stays in the config directory, keyed by server address.
+     */
     private static Path getSaveFile() {
+        if (currentWorldDir != null) return currentWorldDir.resolve("breedtimer").resolve("animals.json");
+        return SAVE_DIR.resolve(currentWorldId + ".json");
+    }
+
+    /** The config-directory file this world's state was written to before it moved in-world. */
+    private static Path getConfigSaveFile() {
         return SAVE_DIR.resolve(currentWorldId + ".json");
     }
 
@@ -392,13 +472,19 @@ public class BreedCooldownHelper {
 
     private static void saveData() {
         try {
-            Files.createDirectories(SAVE_DIR);
+            Files.createDirectories(getSaveFile().getParent());
             // Convert UUID keys to strings for JSON
             Map<String, Map<String, Integer>> data = new HashMap<>();
             data.put("cooldown", uuidMapToString(cooldownMap));
             data.put("baby", uuidMapToString(babyGrowth.snapshot()));
             data.put("tadpole", uuidMapToString(tadpoleGrowth.snapshot()));
             data.put("ageable", uuidMapToString(AgeableTracking.snapshot()));
+            // Doubts persist for the same reason measured cooldowns do: they run on the same clock
+            // and are shown as the same countdown. Leaving them out meant that every animal whose
+            // mate could not be named -- which, since the mate is only named when a single candidate
+            // forces the answer, is nearly all of them -- came back reading "Ready" after a reload,
+            // with the timer it had earned thrown away.
+            data.put("maybe", uuidMapToString(maybeCooldown));
             // Don't save love mode — it's too short-lived to persist
             Files.writeString(getSaveFile(), GSON.toJson(data));
         } catch (IOException e) {
@@ -407,10 +493,11 @@ public class BreedCooldownHelper {
     }
 
     private static void loadData() {
-        // F-1 migration: load the current id's file if it exists, else fall back to the legacy id's
-        // file (see WorldSaveMigration). Writes always target getSaveFile() -- the legacy file, if
-        // read, is left untouched.
-        Path file = WorldSaveMigration.resolveLoadFile(getSaveFile(), getLegacySaveFile());
+        // Newest location first, then each older one this world might still be sitting in: the
+        // world folder, then the config file keyed by save-folder name, then the pre-F-1 one keyed
+        // by level name. Writes always target getSaveFile() -- older files are left untouched.
+        Path file = WorldSaveMigration.resolveLoadFile(
+                getSaveFile(), getConfigSaveFile(), getLegacySaveFile());
         if (!Files.exists(file)) return;
         try {
             String json = Files.readString(file);
@@ -418,6 +505,9 @@ public class BreedCooldownHelper {
             Map<String, Map<String, Integer>> data = GSON.fromJson(json, type);
             if (data == null) return;
             if (data.containsKey("cooldown")) stringMapToUuid(data.get("cooldown"), cooldownMap);
+            // Absent in files written before 1.6.1; a missing key just means no doubts to carry
+            // over, which is what every older file legitimately says.
+            if (data.containsKey("maybe")) stringMapToUuid(data.get("maybe"), maybeCooldown);
             if (data.containsKey("baby")) {
                 Map<UUID, Integer> saved = new HashMap<>();
                 stringMapToUuid(data.get("baby"), saved);
@@ -460,45 +550,172 @@ public class BreedCooldownHelper {
 
     /**
      * Called from AnimalEventMixin when entity event byte 18 (hearts) is received.
-     * First event = entering love mode. Second event while in love = breeding happened.
+     *
+     * <p>Nothing is decided here any more. Vanilla sends this same byte from {@code setInLove} and
+     * from {@code finalizeSpawnChildFromBreeding} with nothing to tell them apart, and the evidence
+     * that does -- a newborn at this animal's feet -- travels in a separate packet that can land a
+     * tick or two later. The event is therefore parked and settled in {@link #tick}; see
+     * {@link BreedingAttribution}.
+     *
+     * <p>Reading the answer off {@code loveMap} the moment the packet arrived, as this used to,
+     * was the bug: in a pen of animals fed together the second parent is regularly mis-identified,
+     * and the animal wrongly left holding a cooldown would then have its own genuine breeding read
+     * as a fresh love, replacing a real five-minute countdown with a phantom thirty-second one.
+     * That belief is now a fallback rather than the verdict, which is all frogs and sniffers have
+     * (they breed without producing a baby) but is no longer allowed to overrule an observation.
      */
     public static void onLoveEvent(Animal animal) {
         UUID uuid = animal.getUUID();
+        // Hearts answer any feed still waiting on this animal, and they settle it in the animal's
+        // favour: setInLove is only reached once the server accepted the food, which for an adult
+        // means its cooldown had already run out.
+        feedProbe.onLoveSeen(uuid);
+        maybeCooldown.remove(uuid);
+        // Captured now, used only if this turns out to be a breeding: the goal that aimed this head
+        // at the mate is stopped by resetLove() before the event is even sent, so every tick we wait
+        // is a tick the head is free to drift somewhere else. See MateBearing.
+        eventHeadYaw.put(uuid, animal.getYHeadRot());
+        breedingAttribution.onLoveEvent(uuid, animal.getType(), animal.position(),
+                loveMap.containsKey(uuid));
+    }
 
-        if (loveMap.containsKey(uuid)) {
-            // Already in love → this is the breeding event → start cooldown
-            loveMap.remove(uuid);
-            cooldownMap.put(uuid, BREED_COOLDOWN_TICKS);
+    /**
+     * The local player offered food to an adult. Called from {@link
+     * de.dennisthegamer.breedtimer.mixin.AnimalEventMixin}; whether the server accepts is answered
+     * by the hearts that do or do not follow -- see {@link FeedProbe}.
+     */
+    public static void onFeedAttempt(Animal animal) {
+        if (!isSupportedAnimal(animal) || animal.isBaby()) return;
+        UUID uuid = animal.getUUID();
+        // Only a doubted animal is worth probing. Its answer is used for exactly one thing -- to
+        // turn a doubt into a fact -- and probing anything else invites a wrong reading: an animal
+        // already in love refuses food because canFallInLove() is false, not because of a cooldown,
+        // and the silence that follows looks identical.
+        if (!maybeCooldown.containsKey(uuid) || loveMap.containsKey(uuid)) return;
+        feedProbe.onFeedAttempt(uuid);
+    }
 
-            // MC only sends event 18 for one parent — find the mate nearby
-            // and put it on cooldown too
-            // Nearest, not first: vanilla's BreedGoal.getFreePartner picks by distanceToSqr, and
-            // getEntitiesOfClass returns in arbitrary order. With two pairs breeding in one herd,
-            // taking the first match could put the cooldown on the wrong animal.
-            Level level = animal.level();
-            AABB searchBox = animal.getBoundingBox().inflate(MATE_SEARCH_RADIUS);
-            List<Animal> nearby = level.getEntitiesOfClass(Animal.class, searchBox,
-                    a -> a != animal && canPairWith(animal, a) && loveMap.containsKey(a.getUUID()));
-            Animal mate = null;
-            double closestDist = Double.MAX_VALUE;
-            for (Animal candidate : nearby) {
-                double dist = candidate.position().distanceToSqr(animal.position());
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    mate = candidate;
-                }
+    /**
+     * Settles the parked entity events: first the ones a newborn explains, then the ones whose
+     * window ran out with no newborn ever arriving.
+     *
+     * <p>Called from {@link #tick} between the bucket-release match and the growth loop, and it has
+     * to stay there. The release match above writes an estimate for the mob it explains, which
+     * takes that mob out of the running here; the growth loop below seeds an estimate for every
+     * baby it sees, after which a newborn is indistinguishable from one that has been standing in
+     * the pen all along.
+     */
+    private static void resolveLoveEvents(List<Entity> loadedEntities, int delta) {
+        if (breedingAttribution.hasPending()) {
+            for (Entity entity : loadedEntities) {
+                if (!(entity instanceof AgeableMob mob) || !mob.isBaby()) continue;
+                // Never seen by any growth tracker, so it did not exist a tick ago -- the same
+                // signal the bucket-release match uses to spot a mob that has just appeared.
+                if (isAlreadyTracked(entity)) continue;
+                UUID parent = breedingAttribution.claimBirth(entity.getType(), entity.position());
+                if (parent != null) applyBreeding(parent, loadedEntities);
             }
-            if (mate != null) {
-                loveMap.remove(mate.getUUID());
-                cooldownMap.put(mate.getUUID(), BREED_COOLDOWN_TICKS);
-            }
-        } else {
-            // Vanilla only broadcasts 18 from setInLove -- which requires age 0, i.e. no cooldown
-            // left -- or from breeding itself. An event arriving while we believe this animal is on
-            // cooldown proves our cooldown is wrong; drop it rather than swallow the event.
-            cooldownMap.remove(uuid);
-            loveMap.put(uuid, LOVE_MODE_TICKS);
         }
+        for (Map.Entry<UUID, BreedingAttribution.Verdict> resolved
+                : breedingAttribution.tick(delta).entrySet()) {
+            if (resolved.getValue() == BreedingAttribution.Verdict.BRED) {
+                applyBreeding(resolved.getKey(), loadedEntities);
+                continue;
+            }
+            // Only here, with nothing left suggesting a breeding, may a cooldown we are holding be
+            // dropped: vanilla cannot put an animal into love mode while its real cooldown runs, so
+            // a genuine setInLove proves our cooldown wrong. Doing this on packet arrival is what
+            // let a mis-attributed cooldown be wiped by the animal's own breeding.
+            cooldownMap.remove(resolved.getKey());
+            loveMap.put(resolved.getKey(), LOVE_MODE_TICKS);
+            // This event was a feed, not a breeding, so its heading names nobody.
+            eventHeadYaw.remove(resolved.getKey());
+        }
+    }
+
+    /**
+     * Puts a parent now known to have bred on the cooldown, together with its mate where the mate
+     * can be named -- by elimination ({@link ParentAccounting}) or from the heading the breeding
+     * goal aimed ({@link MateBearing}). Where neither forces an answer, every candidate carries the
+     * doubt instead.
+     */
+    private static void applyBreeding(UUID parentUuid, List<Entity> loadedEntities) {
+        loveMap.remove(parentUuid);
+        cooldownMap.put(parentUuid, BREED_COOLDOWN_TICKS);
+        Float headYaw = eventHeadYaw.remove(parentUuid);
+
+        Animal parent = null;
+        for (Entity entity : loadedEntities) {
+            if (entity instanceof Animal animal && animal.getUUID().equals(parentUuid)) {
+                parent = animal;
+                break;
+            }
+        }
+        // Gone in the tick between the event and its verdict -- killed, or streamed out. The
+        // broadcaster's own cooldown above is still right; there is simply nobody to search from.
+        if (parent == null) return;
+
+        List<Animal> candidates = inLoveMates(parent);
+        // Nothing we ever saw fall in love is standing here, so there is no mate to name.
+        if (candidates.isEmpty()) return;
+
+        // Nameable by elimination -- see ParentAccounting, which records why the arithmetic that
+        // used to name whole groups here was removed. One candidate makes the answer forced.
+        Animal named = ParentAccounting.canNameMate(candidates.size()) ? candidates.get(0)
+                : namedByHeading(parent, candidates, headYaw);
+
+        if (named == null) {
+            // One of these bred and the game will not say which. Record the doubt against all of
+            // them so none of them goes on claiming to be ready, carrying the cooldown they would
+            // have if they were the one -- which is what a refused feed later turns into fact.
+            for (Animal candidate : candidates) {
+                maybeCooldown.put(candidate.getUUID(), BREED_COOLDOWN_TICKS);
+            }
+            return;
+        }
+        loveMap.remove(named.getUUID());
+        maybeCooldown.remove(named.getUUID());
+        cooldownMap.put(named.getUUID(), BREED_COOLDOWN_TICKS);
+    }
+
+    /**
+     * The candidate the broadcaster's head was aimed at, or {@code null} where the heading does not
+     * force an answer -- see {@link MateBearing} for why the head names the mate and where it stops
+     * being trustworthy.
+     *
+     * <p>Bearings are measured from the parent's position at this moment rather than from where its
+     * event came from: the two are a tick or two apart, and over that distance the angle to a
+     * neighbour three blocks away moves far less than the margin the rule demands.
+     */
+    private static Animal namedByHeading(Animal parent, List<Animal> candidates, Float headYaw) {
+        // No heading recorded. Happens for a breeding reached through the tick() fallback after the
+        // event was already resolved, and for anything that books a breeding without an event 18 at
+        // all -- turtles come through onTurtleBred, not here, but the guard costs nothing.
+        if (headYaw == null) return null;
+
+        double[] bearings = new double[candidates.size()];
+        for (int i = 0; i < candidates.size(); i++) {
+            Animal candidate = candidates.get(i);
+            bearings[i] = MateBearing.bearingDegrees(candidate.getX() - parent.getX(),
+                    candidate.getZ() - parent.getZ());
+        }
+        int index = MateBearing.name(headYaw, bearings);
+        return index < 0 ? null : candidates.get(index);
+    }
+
+    /**
+     * Every animal this breeding could have taken its mate from: same pairing rules, still believed
+     * to be in love, and inside the distance both of vanilla's breeding systems require at the
+     * instant they breed ({@link #MATE_BREED_DISTANCE_SQ}).
+     *
+     * <p>Which of them it actually was is not in any packet, so the choice is left to
+     * {@link ParentAccounting} rather than made here by proximity.
+     */
+    private static List<Animal> inLoveMates(Animal animal) {
+        AABB searchBox = animal.getBoundingBox().inflate(MATE_BREED_DISTANCE);
+        return animal.level().getEntitiesOfClass(Animal.class, searchBox,
+                a -> a != animal && canPairWith(animal, a) && loveMap.containsKey(a.getUUID())
+                        && a.distanceToSqr(animal) < MATE_BREED_DISTANCE_SQ);
     }
 
     /**
@@ -617,8 +834,24 @@ public class BreedCooldownHelper {
         // removeIf rather than iterating a defensive copy: the copy existed only to avoid a
         // ConcurrentModificationException, and it allocated a list plus an array every tick.
         unseenTicks.keySet().removeIf(loadedUuids::contains);
+        // Every map the ageing below clears has to be counted here, or an entry that lives in one
+        // of the others alone never ages at all: it is not in cooldownMap, so it never accrues
+        // unseen ticks, so the removeIf beneath never reaches it. A love entry stuck that way keeps
+        // its animal in inLoveMates for good and gets it doubted by every later breeding nearby,
+        // and since 1.6.1 persists the doubts, they accumulate in the save file without limit.
+        // The containment guards keep an animal that stands in two of the maps from ageing at twice
+        // the rate; no set is built for that, because this runs every tick over every tracked animal.
         for (UUID tracked : cooldownMap.keySet()) {
-            if (!loadedUuids.contains(tracked)) {
+            if (!loadedUuids.contains(tracked)) unseenTicks.merge(tracked, delta, Integer::sum);
+        }
+        for (UUID tracked : loveMap.keySet()) {
+            if (!loadedUuids.contains(tracked) && !cooldownMap.containsKey(tracked)) {
+                unseenTicks.merge(tracked, delta, Integer::sum);
+            }
+        }
+        for (UUID tracked : maybeCooldown.keySet()) {
+            if (!loadedUuids.contains(tracked) && !cooldownMap.containsKey(tracked)
+                    && !loveMap.containsKey(tracked)) {
                 unseenTicks.merge(tracked, delta, Integer::sum);
             }
         }
@@ -626,6 +859,7 @@ public class BreedCooldownHelper {
             if (entry.getValue() < FORGET_AFTER_UNSEEN_TICKS) return false;
             cooldownMap.remove(entry.getKey());
             loveMap.remove(entry.getKey());
+            maybeCooldown.remove(entry.getKey());
             return true;
         });
 
@@ -649,6 +883,31 @@ public class BreedCooldownHelper {
             entry.setValue(entry.getValue() - delta);
             return entry.getValue() <= 0;
         });
+
+        // The doubted ones run on the same clock: if the animal did breed this is its real
+        // remaining time, and if it did not, the doubt should expire exactly when a cooldown would
+        // have -- past that point the animal is free either way and there is nothing left to warn
+        // about.
+        maybeCooldown.entrySet().removeIf(entry -> {
+            if (!loadedUuids.contains(entry.getKey())) return false;
+            entry.setValue(entry.getValue() - delta);
+            return entry.getValue() <= 0;
+        });
+
+        // A feed nobody answered with hearts. For an adult the server refuses food only when its
+        // breeding cooldown is still running, so a doubt we were carrying is now a fact -- and the
+        // time it has left is the one we recorded when the breeding was seen.
+        for (UUID refused : feedProbe.tick(delta)) {
+            Integer remaining = maybeCooldown.remove(refused);
+            // The doubt expired between the feed and its silence; there is nothing left to promote.
+            if (remaining == null) continue;
+            // merge rather than put: an animal can carry a doubt and a measured cooldown at once,
+            // because the broadcaster branch above writes cooldownMap without clearing the doubt it
+            // may already have had. The doubt is always the older and therefore the smaller of the
+            // two, so a plain put would replace a countdown we measured with one we guessed and the
+            // label would jump backwards by up to a minute.
+            cooldownMap.merge(refused, remaining, Math::max);
+        }
 
         // Same pause-while-unloaded rule as the timers above: a panda we cannot see is not being
         // asked about bamboo either, so its report should not expire behind our back.
@@ -743,6 +1002,10 @@ public class BreedCooldownHelper {
                 }
             }
         }
+
+        // Settles the parked entity event 18s. Must sit between the release match above and the
+        // growth loop below -- see resolveLoveEvents for why neither side of that is optional.
+        resolveLoveEvents(loadedEntities, delta);
 
         // Track baby growth for all loaded animals
         for (Entity entity : loadedEntities) {
@@ -1101,27 +1364,64 @@ public class BreedCooldownHelper {
                     color, blocked.reason());
         }
 
+        // Check our tracked cooldown
+        if (cooldownMap.containsKey(uuid)) {
+            int remaining = cooldownMap.get(uuid);
+            return new AnimalTimerInfo(animal, AnimalState.COOLDOWN, remaining,
+                    cooldownColor(remaining));
+        }
+
+        // A breeding happened among animals this one was standing with, and the game tells the
+        // client nothing about which of them took part. Shown as a cooldown, because the countdown
+        // is the right length for an animal that did breed and "Ready" would be the one answer
+        // certainly wrong for one of them -- but marked, because after the herd test of 31.08.2026
+        // the doubt is the common case in a pen rather than the rare one, and an unmarked guess at
+        // that scale shows most of a herd a timer the mod cannot stand behind. The mark is a flag
+        // rather than a state of its own: everything that filters or counts animals switches
+        // exhaustively on AnimalState on every supported version, so a fourth constant would have
+        // to be handled in all of them -- the cost that made AGE_LOCKED expensive.
+        //
+        // Ahead of love mode, not after it. Vanilla calls resetLove() on both parents the instant
+        // they breed, so an animal that took part is not in love any more -- but our own love entry
+        // is a countdown started when it was fed and it keeps running for the rest of its 600 ticks.
+        // Reading that entry first left the timer sitting on "In Love!" for up to half a minute
+        // after the breeding, which is the lag this ordering exists to remove. The love entry is
+        // deliberately left in place rather than deleted: FeedProbe uses it to know that a refused
+        // feed would be ambiguous while the animal may still legitimately be in love.
+        //
+        // Reaching this at all is now the exception rather than the rule: MateBearing names the mate
+        // from the heading the breeding goal itself aimed, so in a pen where the pairs stand apart
+        // the doubt is never booked and this animal shows a measured countdown instead. What is left
+        // here are the readings that genuinely do not separate -- candidates within a few degrees of
+        // one another from where the event came from.
+        //
+        // Self-correcting where it matters: hearts from this animal clear the entry at once, and a
+        // feed that goes unanswered turns it into a measured cooldown -- see FeedProbe.
+        Integer doubted = maybeCooldown.get(uuid);
+        if (doubted != null) {
+            return new AnimalTimerInfo(animal, AnimalState.COOLDOWN, doubted, cooldownColor(doubted),
+                    null, true);
+        }
+
         // Check love mode
         if (loveMap.containsKey(uuid)) {
             return new AnimalTimerInfo(animal, AnimalState.IN_LOVE, loveMap.get(uuid), p.love);
         }
 
-        // Check our tracked cooldown
-        if (cooldownMap.containsKey(uuid)) {
-            int remaining = cooldownMap.get(uuid);
-            int color;
-            int seconds = remaining / 20;
-            if (seconds > 180) {
-                color = p.coolFar;
-            } else if (seconds > 60) {
-                color = p.coolMid;
-            } else {
-                color = p.coolNear;
-            }
-            return new AnimalTimerInfo(animal, AnimalState.COOLDOWN, remaining, color);
-        }
-
         return new AnimalTimerInfo(animal, AnimalState.READY, 0, p.ready);
+    }
+
+    /**
+     * How urgent a breeding countdown looks: far off, getting close, nearly done. Shared by the
+     * measured cooldown and the doubted one so the two cannot drift apart -- a doubted countdown
+     * that looked different at the same remaining time would read as a different kind of thing.
+     */
+    private static int cooldownColor(int remainingTicks) {
+        StatePalette p = StatePalette.current();
+        int seconds = remainingTicks / 20;
+        if (seconds > 180) return p.coolFar;
+        if (seconds > 60) return p.coolMid;
+        return p.coolNear;
     }
 
     /**
