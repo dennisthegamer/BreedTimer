@@ -73,6 +73,7 @@
   "breedtimer.state.ready": "✓ Ready",
   "breedtimer.state.allay_not_ready": "Not ready",
   "breedtimer.state.allay_needs_jukebox": "Needs a jukebox",
+  "breedtimer.state.cooldown_uncertain": "%s",
   "breedtimer.state.in_love": "❤ In Love!",
   "breedtimer.state.growing": "Growing: %s",
   "breedtimer.state.growing_soon": "Almost grown",

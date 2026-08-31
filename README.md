@@ -61,7 +61,7 @@ up.
 
 ## Download
 
-Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader (`breedtimer-fabric-1.6.0+mc26.2.jar` and `breedtimer-neoforge-1.6.0+mc26.2.jar`).
+Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader (`breedtimer-fabric-1.6.1+mc26.2.jar` and `breedtimer-neoforge-1.6.1+mc26.2.jar`).
 
 ## Installation
 
