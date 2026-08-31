@@ -66,8 +66,8 @@ up.
 
 Download the latest release from [Modrinth](https://modrinth.com/mod/breedtimer) or [GitHub Releases](https://github.com/DennisTheGamer/BreedTimer/releases). Each release contains one JAR per mod loader:
 
-- **Fabric**: `breedtimer-fabric-1.6.0+mc26.1-26.1.2.jar` — works on Minecraft 26.1 through 26.1.2.
-- **NeoForge**: `breedtimer-neoforge-1.6.0+mc26.1.2.jar` — Minecraft 26.1.2 only. NeoForge has no
+- **Fabric**: `breedtimer-fabric-1.6.1+mc26.1-26.1.2.jar` — works on Minecraft 26.1 through 26.1.2.
+- **NeoForge**: `breedtimer-neoforge-1.6.1+mc26.1.2.jar` — Minecraft 26.1.2 only. NeoForge has no
   working build for the earlier 26.1 and 26.1.1 point releases, so this is the earliest version it
   supports in the 26.1 line.
 

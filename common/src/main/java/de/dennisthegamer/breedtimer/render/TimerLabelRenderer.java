@@ -395,7 +395,14 @@ public class TimerLabelRenderer {
     private static Component getDisplayComponent(AnimalTimerInfo info) {
         return switch (info.state()) {
             case READY -> Component.translatable("breedtimer.state.ready");
-            case COOLDOWN -> Component.literal(BreedCooldownHelper.formatTime(info.remainingTicks()));
+            // A doubted cooldown gets its own key rather than a prefix glued on here, so the mark
+            // can move or be dropped per language. The measured case stays a plain literal: it is
+            // by far the common one and a translatable would build a formatted string every frame
+            // for every animal on screen -- the same reason blockedComponent keeps two keys.
+            case COOLDOWN -> info.uncertain()
+                    ? Component.translatable("breedtimer.state.cooldown_uncertain",
+                            BreedCooldownHelper.formatTime(info.remainingTicks()))
+                    : Component.literal(BreedCooldownHelper.formatTime(info.remainingTicks()));
             case IN_LOVE -> Component.translatable("breedtimer.state.in_love");
             // Our growth time is an estimate; once it runs out the animal is still a baby, so
             // say "almost grown" instead of showing a 0:00 that looks stuck.
@@ -447,6 +454,9 @@ public class TimerLabelRenderer {
                     ? Component.translatable("breedtimer.state.growing_soon")
                     : Component.translatable("breedtimer.state.growing",
                             BreedCooldownHelper.formatTime(info.remainingTicks()));
+            // The same wording the animals use: it is the same state, and a second phrase for it
+            // would only make the two look like different things.
+            case COURTSHIP -> Component.translatable("breedtimer.state.in_love");
             case BLOCKED  -> Component.translatable("breedtimer.state.blocked.sleeping");
         };
     }
