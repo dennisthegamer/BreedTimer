@@ -40,9 +40,14 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.network.protocol.game.ClientboundSoundPacket;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BeehiveBlock;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.AABB;
@@ -62,6 +67,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -287,6 +293,85 @@ public class BreedCooldownHelper {
     private static final double MATE_BREED_DISTANCE = 3.0;
     private static final double MATE_BREED_DISTANCE_SQ = MATE_BREED_DISTANCE * MATE_BREED_DISTANCE;
 
+    /**
+     * Estimates held for bees currently inside a hive -- see {@link HiveHandover} for why a bee that
+     * goes into one comes back out as a different entity.
+     */
+    private static final HiveHandover hiveHandover = new HiveHandover();
+
+    /**
+     * Where each loaded bee was last seen. Doubles as the record of which bees we have already met:
+     * a bee absent from here is either one that just streamed in or one a hive just released, and a
+     * bee that was here last tick and is gone now is a candidate for having entered one.
+     *
+     * <p>Bees only. Every other animal in the game keeps its identity when it leaves and returns, so
+     * paying a map write per animal per tick to watch them would buy nothing.
+     */
+    private static final Map<UUID, SeenBee> lastSeenBees = new HashMap<>();
+
+    /**
+     * The last thing we knew about a loaded bee.
+     *
+     * <p>{@code nectar} is here because it decides how long the hive will keep the bee:
+     * {@code Occupant.of} writes {@code minTicksInHive} as 2400 for a bee carrying nectar and 600 for
+     * one that is not, and {@code BeeData.tick()} will not release it before that. It has to be read
+     * while the bee is still loaded -- once it is inside the hive there is nothing left to ask.
+     *
+     * <p>{@code dying} rules a bee out of parking altogether: a bee killed beside a hive vanishes
+     * exactly like one that went in, and an in-game test on 18.09 parked three of them.
+     */
+    private record SeenBee(Vec3 pos, boolean nectar, boolean dying) {}
+
+    /**
+     * The enter and exit sounds of nearby hives, waiting for their bees. A hive announces every bee
+     * it takes in and lets out, at its own block -- see {@link HiveSounds} for why that, and not the
+     * bee's last position, is what decides which hive a bee belongs to.
+     */
+    private static final HiveSounds hiveSounds = new HiveSounds();
+
+    private static final Identifier HIVE_ENTER_SOUND = Identifier.withDefaultNamespace("block.beehive.enter");
+    private static final Identifier HIVE_EXIT_SOUND = Identifier.withDefaultNamespace("block.beehive.exit");
+
+    /**
+     * A bee that stopped being loaded and has not been explained yet. Held for
+     * {@link HiveSounds#WINDOW_TICKS} because the hive's sound can be handled a frame after the
+     * entity's removal; only then is it decided what the silence means.
+     */
+    private static final class VanishedBee {
+        final UUID uuid;
+        final SeenBee last;
+        final long vanishedAt;
+        int age;
+
+        VanishedBee(UUID uuid, SeenBee last, long vanishedAt) {
+            this.uuid = uuid;
+            this.last = last;
+            this.vanishedAt = vanishedAt;
+        }
+    }
+
+    /** A bee seen for the first time beside a hive, waiting the same few ticks for the exit sound. */
+    private static final class AppearedBee {
+        final Bee bee;
+        final Vec3 pos;
+        int age;
+
+        AppearedBee(Bee bee) {
+            this.bee = bee;
+            this.pos = bee.position();
+        }
+    }
+
+    private static final List<VanishedBee> vanishedBees = new ArrayList<>();
+    private static final List<AppearedBee> appearedBees = new ArrayList<>();
+
+    /**
+     * How far from a vanished bee's last position a hive may stand for the two to be connected.
+     * {@code BeeGoToHiveGoal} hands the bee to {@code addOccupant} once {@code hasReachedTarget}
+     * passes, which is {@code closerThan(hivePos, 2.0)}, so 2 is the radius vanilla itself works to.
+     */
+    private static final int HIVE_SEARCH_RADIUS = 2;
+
     /** Buckets the local player has just emptied, waiting for the mob to stream in; see {@link #tick}. */
     private static final List<PendingRelease> pendingReleases = new ArrayList<>();
     /** Same window the allay child match uses, and for the same reason: one batch of packets, held for a second. */
@@ -407,6 +492,11 @@ public class BreedCooldownHelper {
         pendingDuplications.clear();
         unexplainedAllays.clear();
         pendingReleases.clear();
+        hiveHandover.clear();
+        hiveSounds.clear();
+        lastSeenBees.clear();
+        vanishedBees.clear();
+        appearedBees.clear();
         breedingAttribution.clear();
         feedProbe.clear();
         eventHeadYaw.clear();
@@ -442,6 +532,11 @@ public class BreedCooldownHelper {
         pendingDuplications.clear();
         unexplainedAllays.clear();
         pendingReleases.clear();
+        hiveHandover.clear();
+        hiveSounds.clear();
+        lastSeenBees.clear();
+        vanishedBees.clear();
+        appearedBees.clear();
         breedingAttribution.clear();
         feedProbe.clear();
         eventHeadYaw.clear();
@@ -983,6 +1078,15 @@ public class BreedCooldownHelper {
         // nothing more than one comparison.
         List<Panda> loadedAdultPandas = null;
 
+        // Bees and their hives. Ticked first so a bee parked on this very tick starts its stay where
+        // its sound put it, then parked, then claimed -- and all of it ahead of the growth loop below,
+        // which would otherwise seed a released baby a fresh 20:00 before it could be recognised. The
+        // sounds age last, so one heard this frame gets its full window.
+        hiveHandover.tick(delta);
+        parkBeesThatEnteredHives(level, loadedUuids);
+        claimBeesReleasedFromHives(level, loadedEntities);
+        hiveSounds.tick();
+
         // Bucket releases still waiting for the mob they explain, matched by species and proximity to
         // where the item was emptied -- the same consume-on-match shape pendingDuplications uses below.
         // This has to run before the growth loop beneath it, not after: that loop seeds a fresh 20:00 (or
@@ -1092,6 +1196,13 @@ public class BreedCooldownHelper {
             if (animal instanceof Hoglin hoglin) {
                 HoglinRepellents.tick(hoglin, delta);
             }
+
+            // Refreshed last, once this bee has had its chance to claim above: the claim reads this
+            // map to tell a bee it has never met from one it has been watching all along.
+            if (animal instanceof Bee watched) {
+                lastSeenBees.put(uuid, new SeenBee(watched.position(), watched.hasNectar(),
+                        watched.isDeadOrDying()));
+            }
         }
 
         // Nearest-partner lookup for the panda cub-odds label (Task 35). Always cleared -- even
@@ -1142,6 +1253,261 @@ public class BreedCooldownHelper {
         // as something the match above rejected) is simply dropped -- there is no second chance for it,
         // exactly like an unmatched allay sighting above.
         pendingReleases.removeIf(release -> (release.ticksLeft -= delta) <= 0);
+    }
+
+    /**
+     * The nearest hive within {@link #HIVE_SEARCH_RADIUS} blocks of a position, or
+     * {@link HiveHandover#NO_HIVE}.
+     *
+     * <p>A beehive and a bee nest are the same {@code BeehiveBlock}, which is what makes one
+     * {@code instanceof} enough for both. Runs at most 125 block lookups, but only for a bee that
+     * just vanished or one being seen for the first time, so it costs nothing on an ordinary tick.
+     *
+     * <p>On an unloaded chunk the client answers every lookup with air, so a bee that went out of
+     * render distance rather than into a hive finds nothing here and is simply left alone -- the
+     * same do-nothing outcome the mod had before this existed.
+     */
+    private static long hiveNear(Level level, Vec3 pos) {
+        BlockPos centre = BlockPos.containing(pos);
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        long nearest = HiveHandover.NO_HIVE;
+        double nearestDistanceSq = Double.MAX_VALUE;
+        for (int dx = -HIVE_SEARCH_RADIUS; dx <= HIVE_SEARCH_RADIUS; dx++) {
+            for (int dy = -HIVE_SEARCH_RADIUS; dy <= HIVE_SEARCH_RADIUS; dy++) {
+                for (int dz = -HIVE_SEARCH_RADIUS; dz <= HIVE_SEARCH_RADIUS; dz++) {
+                    cursor.set(centre.getX() + dx, centre.getY() + dy, centre.getZ() + dz);
+                    if (!(level.getBlockState(cursor).getBlock() instanceof BeehiveBlock)) continue;
+                    double distanceSq = cursor.distToCenterSqr(pos.x, pos.y, pos.z);
+                    if (distanceSq >= nearestDistanceSq) continue;
+                    nearestDistanceSq = distanceSq;
+                    nearest = HiveHandover.key(cursor.getX(), cursor.getY(), cursor.getZ());
+                }
+            }
+        }
+        return nearest;
+    }
+
+    /**
+     * A hive at the packet's position played its enter or exit sound -- see
+     * {@link de.dennisthegamer.breedtimer.mixin.DropSoundMixin}, which hands over every sound packet.
+     * Recorded against the block it came from: the enter sound is played at the block's corner and
+     * the exit sound at its centre, and {@code containing} maps both to the hive itself.
+     */
+    public static void onHiveSound(ClientboundSoundPacket packet) {
+        Holder<SoundEvent> sound = packet.getSound();
+        boolean enter = sound.is(HIVE_ENTER_SOUND);
+        if (!enter && !sound.is(HIVE_EXIT_SOUND)) return;
+        Level level = Minecraft.getInstance().level;
+        if (level == null) return;
+        BlockPos hive = BlockPos.containing(packet.getX(), packet.getY(), packet.getZ());
+        hiveSounds.heard(enter, hive.getX(), hive.getY(), hive.getZ(), level.getGameTime());
+    }
+
+    /**
+     * Decides, for every bee that stopped being loaded, whether a hive took it in -- and parks its
+     * estimates if so.
+     *
+     * <p>The hive's enter sound decides it. A bee matched to one is parked at the hive the sound came
+     * from, and its entries are dropped: the UUID they are keyed by belongs to an entity that no
+     * longer exists and never will again, and {@code babyGrowth} has no ageing-out path at all, which
+     * is how a hive full of bees once leaked a permanent entry per visit.
+     *
+     * <p>Silence means something only where the player would have heard the hive. There a bee that
+     * vanished without a sound died, or went some other way, and its entries are left exactly as they
+     * were. Out of earshot the mod cannot tell a bee entering a hive from one leaving the tracking
+     * range, so it parks a copy as a guess and keeps the entries too: if the bee walks back in under
+     * its own UUID the guess is withdrawn, and if a released bee claims it the entries go then.
+     */
+    private static void parkBeesThatEnteredHives(Level level, Set<UUID> loadedUuids) {
+        long now = level.getGameTime();
+        for (Iterator<Map.Entry<UUID, SeenBee>> seen = lastSeenBees.entrySet().iterator(); seen.hasNext(); ) {
+            Map.Entry<UUID, SeenBee> entry = seen.next();
+            if (loadedUuids.contains(entry.getKey())) continue;
+            // Removed here whatever becomes of it, which is what makes this edge-triggered: a bee that
+            // died or wandered off is considered once, not on every tick for the rest of the session.
+            seen.remove();
+            SeenBee last = entry.getValue();
+            // Killed beside a hive it vanishes exactly like one that went in; nothing to park.
+            if (last.dying()) continue;
+            vanishedBees.add(new VanishedBee(entry.getKey(), last, now));
+        }
+        if (vanishedBees.isEmpty()) return;
+
+        List<HiveSounds.Pos> positions = new ArrayList<>();
+        for (VanishedBee vanished : vanishedBees) positions.add(posOf(vanished.last.pos()));
+        List<HiveSounds.Heard> heard = hiveSounds.matchEnters(positions);
+
+        Player player = Minecraft.getInstance().player;
+        List<VanishedBee> undecided = new ArrayList<>();
+        for (int i = 0; i < vanishedBees.size(); i++) {
+            VanishedBee vanished = vanishedBees.get(i);
+            // Loaded again while it waited -- a flicker at a chunk edge -- so it went nowhere.
+            if (loadedUuids.contains(vanished.uuid)) continue;
+            HiveSounds.Heard sound = heard.get(i);
+            if (sound != null) {
+                park(vanished, sound.hive(), true, (int) Math.max(0, now - sound.gameTime()));
+                continue;
+            }
+            if (++vanished.age < HiveSounds.WINDOW_TICKS) {
+                undecided.add(vanished);
+                continue;
+            }
+            long hive = hiveNear(level, vanished.last.pos());
+            // No hive in reach, or one in earshot that stayed silent: the bee went somewhere else.
+            if (hive == HiveHandover.NO_HIVE) continue;
+            if (player != null && HiveSounds.withinEarshot(player.getX(), player.getY(), player.getZ(), hive)) continue;
+            park(vanished, hive, false, (int) Math.max(0, now - vanished.vanishedAt));
+        }
+        vanishedBees.clear();
+        vanishedBees.addAll(undecided);
+    }
+
+    /**
+     * Parks what we know about one vanished bee. A heard entry takes the bee's entries with it; a
+     * guessed one leaves them where they are, so nothing is lost if the guess was wrong.
+     */
+    private static void park(VanishedBee vanished, long hive, boolean heard, int elapsedSoFar) {
+        UUID uuid = vanished.uuid;
+        // babyGrowth holds an entry for babies only -- the growth loop calls forget() the moment an
+        // animal is seen as an adult -- so its presence is the record of what this bee was when we
+        // last laid eyes on it, and saves carrying a second flag for every loaded bee.
+        boolean baby = babyGrowth.has(uuid);
+        HiveHandover.State state = new HiveHandover.State(
+                cooldownMap.getOrDefault(uuid, 0),
+                baby ? babyGrowth.remainingFor(uuid, 0) : 0,
+                loveMap.getOrDefault(uuid, 0),
+                baby,
+                maybeCooldown.getOrDefault(uuid, 0));
+        hiveHandover.park(uuid, hive, state, vanished.last.nectar(), heard, elapsedSoFar);
+        if (heard) forgetEntries(uuid);
+    }
+
+    /** Drops everything the mod holds for a UUID whose bee has been rebuilt under a new one. */
+    private static void forgetEntries(UUID uuid) {
+        cooldownMap.remove(uuid);
+        loveMap.remove(uuid);
+        maybeCooldown.remove(uuid);
+        babyGrowth.forget(uuid);
+        unseenTicks.remove(uuid);
+    }
+
+    /**
+     * Gives every bee a hive just let out the estimates of the bee that went in, already charged for
+     * the stay.
+     *
+     * <p>The hive's exit sound decides which hive, and the entity ids decide which bee: several bees
+     * leaving one hive together were built in the order they went in, so they are handed to
+     * {@link HiveHandover#claim(long, List)} lowest id first.
+     *
+     * <p>A bee that turns up beside a hive with no exit sound, although the player would have heard
+     * one, did not come out of it -- in a farm that is a newborn -- and is left to the trackers as a
+     * new bee. Out of earshot the hive is guessed from its position, as before the sounds were used.
+     *
+     * <p>Has to run before the growth loop below, for the reason the bucket-release match states in
+     * full: that loop seeds a fresh 20:00 for any baby it does not know yet. A claim that has to wait
+     * a tick for its sound overwrites that seed when it lands.
+     */
+    private static void claimBeesReleasedFromHives(Level level, List<Entity> loadedEntities) {
+        for (Entity entity : loadedEntities) {
+            if (!(entity instanceof Bee bee)) continue;
+            UUID uuid = bee.getUUID();
+            // Known to us already, so it cannot be one a hive just produced.
+            if (lastSeenBees.containsKey(uuid)) continue;
+            // Back under its own UUID: whatever it did, it did not go into a hive.
+            HiveHandover.Unparked back = hiveHandover.unpark(uuid);
+            if (back != null) {
+                if (back.confirmed()) carryOver(bee, back.charged(), false);
+                continue;
+            }
+            // Every newcomer waits, not only those beside a standing hive: a hive broken open plays its
+            // exit sounds as its block disappears. Whether a hive stands nearby is asked only once the
+            // window has passed without a sound.
+            appearedBees.add(new AppearedBee(bee));
+        }
+        appearedBees.removeIf(appeared -> appeared.bee.isRemoved());
+        if (appearedBees.isEmpty()) return;
+
+        List<HiveSounds.Pos> positions = new ArrayList<>();
+        for (AppearedBee appeared : appearedBees) positions.add(posOf(appeared.pos));
+        List<HiveSounds.Heard> heard = hiveSounds.matchExits(positions);
+
+        Player player = Minecraft.getInstance().player;
+        Map<Long, List<Bee>> heardOut = new HashMap<>();
+        Map<Long, List<Bee>> guessedOut = new HashMap<>();
+        List<AppearedBee> undecided = new ArrayList<>();
+        for (int i = 0; i < appearedBees.size(); i++) {
+            AppearedBee appeared = appearedBees.get(i);
+            if (heard.get(i) != null) {
+                heardOut.computeIfAbsent(heard.get(i).hive(), hive -> new ArrayList<>()).add(appeared.bee);
+                continue;
+            }
+            if (++appeared.age < HiveSounds.WINDOW_TICKS) {
+                undecided.add(appeared);
+                continue;
+            }
+            long hive = hiveNear(level, appeared.pos);
+            if (hive == HiveHandover.NO_HIVE) continue;
+            // In earshot and silent: it did not come out of that hive -- in a farm, a newborn.
+            if (player != null && HiveSounds.withinEarshot(player.getX(), player.getY(), player.getZ(), hive)) continue;
+            guessedOut.computeIfAbsent(hive, key -> new ArrayList<>()).add(appeared.bee);
+        }
+        appearedBees.clear();
+        appearedBees.addAll(undecided);
+
+        // Heard ones first, so a guess cannot take an entry a heard bee is owed.
+        heardOut.forEach(BreedCooldownHelper::claimReleased);
+        guessedOut.forEach(BreedCooldownHelper::claimReleased);
+    }
+
+    /** Claims for bees that came out of one hive together, lowest entity id first. */
+    private static void claimReleased(long hive, List<Bee> bees) {
+        bees.sort(Comparator.comparingInt(Entity::getId));
+        List<HiveHandover.Release> releases = new ArrayList<>();
+        for (Bee bee : bees) releases.add(new HiveHandover.Release(bee.isBaby(), bee.isAgeLocked()));
+        List<HiveHandover.Claim> claims = hiveHandover.claim(hive, releases);
+        for (int i = 0; i < bees.size(); i++) {
+            Bee bee = bees.get(i);
+            HiveHandover.Claim claim = claims.get(i);
+            if (claim == null) continue;
+            carryOver(bee, claim.after(), claim.ambiguous());
+            // A guessed entry left the bee's entries in place in case it came back; it has not -- a
+            // released bee took its figures -- so they belong to a UUID that no longer exists.
+            if (!claim.confirmed()) forgetEntries(claim.parkedUuid());
+        }
+    }
+
+    /** Writes estimates carried across a hive stay onto the bee that now holds them. */
+    private static void carryOver(Bee bee, HiveHandover.State carried, boolean ambiguous) {
+        UUID uuid = bee.getUUID();
+        // Zero means expired for these three, and all three maps drop an entry the moment it
+        // reaches zero, so writing one back would be undone on the next tick anyway.
+        int cooldown = carried.cooldownTicks();
+        int doubt = carried.doubtTicks();
+        // A hive that held more bees of the same kind than it let out cannot say which one came
+        // out, so the figure handed back is a guess however carefully it was chosen. The mod already
+        // has a place for exactly that: maybeCooldown is the doubt it books when a breeding cannot be
+        // attributed. Booking a guessed countdown there keeps cooldownMap meaning what it has always
+        // meant -- a cooldown the mod watched start -- so a later feed can still settle the doubt
+        // through FeedProbe.
+        if (ambiguous && cooldown > 0) {
+            doubt = Math.max(doubt, cooldown);
+            cooldown = 0;
+        }
+        if (cooldown > 0) cooldownMap.put(uuid, cooldown);
+        if (doubt > 0) maybeCooldown.put(uuid, doubt);
+        if (carried.loveTicks() > 0) loveMap.put(uuid, carried.loveTicks());
+        // Growth is the exception: zero is a real answer there -- "about to grow up" -- and it has to
+        // be written even so. A bee still showing as a baby after its estimate was charged to nothing
+        // means our stay ran longer than the hive's own ticksInHive, and leaving the figure unwritten
+        // would hand it straight back to the growth loop below, which seeds any baby it does not know
+        // with a fresh 20:00. That reset is the bug this all exists to fix. Guarded on isBaby()
+        // because a baby that finished growing inside comes out an adult, and an adult must not carry
+        // a growth estimate at all.
+        if (bee.isBaby()) babyGrowth.set(uuid, carried.growthTicks());
+    }
+
+    private static HiveSounds.Pos posOf(Vec3 pos) {
+        return new HiveSounds.Pos(pos.x, pos.y, pos.z);
     }
 
     /**
