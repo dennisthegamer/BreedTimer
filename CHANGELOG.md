@@ -5,6 +5,18 @@ All notable changes to BreedTimer will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.2] - 2026-09-26
+
+### Fixed
+
+- **Bees leaving a hive no longer reset their timer.** A bee that went into a hive or bee nest came
+  back out as a brand new creature as far as the game is concerned, so the mod lost track of it: a
+  baby's growth timer jumped back up to the full 20 minutes, and an adult still on its breeding
+  cooldown read "Ready". The mod now recognises the bee that comes out as the one that went in, and
+  counts the time it spent inside — which the game charges it too. (Thanks for the report!)
+- **Bee farms no longer bloat the save file.** Every hive visit used to leave a dead entry behind,
+  and the ones belonging to baby bees were never cleaned up. They are now dropped as the bee enters.
+
 ## [1.6.1] - 2026-08-31
 
 ### Fixed
