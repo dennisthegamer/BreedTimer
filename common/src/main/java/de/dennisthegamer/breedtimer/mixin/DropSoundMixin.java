@@ -1,6 +1,7 @@
 package de.dennisthegamer.breedtimer.mixin;
 
 import de.dennisthegamer.breedtimer.util.DropWindows;
+import de.dennisthegamer.breedtimer.util.BreedCooldownHelper;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import org.spongepowered.asm.mixin.Mixin;
@@ -12,6 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * Catches the two sounds that mark a timed drop finishing: a chicken laying an egg and an armadillo
  * shedding a scute. Both timers are server-only fields; the sound is the only trace either leaves on
  * a client.
+ *
+ * <p>Also hands every sound to {@link BreedCooldownHelper#onHiveSound}: a hive's enter and exit
+ * sounds are what tell the mod which hive a bee went into and came out of, and it ignores the rest.
  *
  * <p>{@code TAIL}, not {@code HEAD}, and the difference is a correctness bug rather than a style
  * choice: the method opens with {@code PacketUtils.ensureRunningOnSameThread}, which throws to
@@ -37,5 +41,6 @@ public abstract class DropSoundMixin {
     )
     private void breedtimer$onSound(ClientboundSoundPacket packet, CallbackInfo ci) {
         DropWindows.onSound(packet);
+        BreedCooldownHelper.onHiveSound(packet);
     }
 }
