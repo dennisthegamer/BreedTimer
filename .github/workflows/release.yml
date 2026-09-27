@@ -1,12 +1,12 @@
 # Automatically create GitHub releases with build artifacts
-# for every push to the mc26.2 branch
+# for every push to the mc26.3 branch
 
 name: Release
 
 on:
   push:
     branches:
-      - mc26.2
+      - mc26.3
 
 jobs:
   build:
