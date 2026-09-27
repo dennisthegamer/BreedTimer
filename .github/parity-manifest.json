@@ -12,6 +12,7 @@
     "common/src/main/resources/assets/breedtimer/lang/de_de.json"
   ],
   "javaTargetByBranch": {
+    "mc26.3": "JAVA_25",
     "mc26.2": "JAVA_25",
     "mc26.1": "JAVA_25",
     "mc1.21.11": "JAVA_21",
