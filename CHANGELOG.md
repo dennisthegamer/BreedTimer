@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.6.2] - 2026-09-26
 
+### Changed
+
+- **Updated to Minecraft 26.3.**
+
 ### Fixed
 
 - **Bees leaving a hive no longer reset their timer.** A bee that went into a hive or bee nest came

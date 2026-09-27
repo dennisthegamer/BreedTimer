@@ -18,14 +18,14 @@ config = "breedtimer.mixins.json"
 [[dependencies.breedtimer]]
 modId = "minecraft"
 type = "required"
-versionRange = "[26.2,26.3)"
+versionRange = "[26.3,26.4)"
 ordering = "NONE"
 side = "CLIENT"
 
 [[dependencies.breedtimer]]
 modId = "neoforge"
 type = "required"
-versionRange = "[26.2,)"
+versionRange = "[26.3,)"
 ordering = "NONE"
 side = "CLIENT"
 
@@ -39,13 +39,13 @@ side = "CLIENT"
 [[dependencies.breedtimer]]
 modId = "hudlib"
 type = "required"
-versionRange = "[1.1,)"
+versionRange = "[1.2,)"
 ordering = "AFTER"
 side = "CLIENT"
 
 [[dependencies.breedtimer]]
 modId = "hudlibcore"
 type = "required"
-versionRange = "[1.1,)"
+versionRange = "[1.2,)"
 ordering = "AFTER"
 side = "CLIENT"

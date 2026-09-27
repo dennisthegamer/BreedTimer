@@ -396,7 +396,7 @@ public class BlockLabelScanner {
                 labelPos.z - camPos.z
             );
             // Same billboard pattern as TimerLabelRenderer
-            poseStack.mulPose(camera.orientation);
+            poseStack.rotate(camera.orientation);
             poseStack.scale(0.025F, -0.025F, 0.025F);
 
             // Same two passes as TimerLabelRenderer: see-through pass carries the background

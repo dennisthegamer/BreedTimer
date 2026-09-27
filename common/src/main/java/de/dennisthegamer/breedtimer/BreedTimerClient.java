@@ -21,7 +21,6 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
-import org.lwjgl.glfw.GLFW;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -65,15 +64,15 @@ public final class BreedTimerClient {
 
         toggleEnabledKey = new KeyMapping(
                 "key.breedtimer.toggleEnabled",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_N,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_N,
                 KEYBIND_CATEGORY
         );
 
         toggleCompactKey = new KeyMapping(
                 "key.breedtimer.toggleCompact",
-                InputConstants.Type.KEYSYM,
-                GLFW.GLFW_KEY_B,
+                InputConstants.Type.KEYBOARD,
+                InputConstants.KEY_B,
                 KEYBIND_CATEGORY
         );
     }

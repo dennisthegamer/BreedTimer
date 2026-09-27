@@ -345,7 +345,7 @@ public class TimerLabelRenderer {
 
         poseStack.pushPose();
         poseStack.translate(attachment.x, attachment.y + 0.5, attachment.z);
-        poseStack.mulPose(camera.orientation);
+        poseStack.rotate(camera.orientation);
         poseStack.scale(0.025F, -0.025F, 0.025F);
 
         submitLine(poseStack, collector, mc, state, text, (float) yOffset, fade, color,

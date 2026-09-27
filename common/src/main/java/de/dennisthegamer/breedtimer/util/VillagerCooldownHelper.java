@@ -6,11 +6,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import de.dennisthegamer.breedtimer.platform.Platforms;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
 import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
@@ -66,15 +69,27 @@ public class VillagerCooldownHelper {
     private static long lastGameTime = -1;
 
     /**
-     * What to throw a villager so it will breed, straight out of {@code Villager.FOOD_POINTS} —
-     * the same map {@code canBreed()} counts against its twelve-point threshold, so the list can
-     * never drift from the rule it describes. Resolved once; the map is a compile-time constant.
+     * What to throw a villager so it will breed. 26.3 replaced the hard-coded
+     * {@code Villager.FOOD_POINTS} map with a per-item data component: an item feeds a villager
+     * exactly when it carries {@code DataComponents.VILLAGER_FOOD}, and
+     * {@code countFoodPointsInInventory()} — the count {@code canBreed()} tests against its
+     * twelve-point threshold — sums that component's {@code nutrition()} over the inventory. So
+     * asking the item registry which items carry the component is the same question the old map
+     * answered, and the list still cannot drift from the rule it describes.
+     *
+     * <p>Resolved once, unlike the tag-driven animal hints in {@link BreedingFoodHelper}: an
+     * item's default components are fixed at registration, not sent by the server, so there is no
+     * empty-before-join window to guard against here.
      */
     private static List<Component> foodHint;
 
     public static List<Component> foodHint() {
         if (foodHint == null) {
-            foodHint = BreedingFoodHelper.fromItems(Villager.FOOD_POINTS.keySet());
+            List<Item> foods = new ArrayList<>();
+            for (Item item : BuiltInRegistries.ITEM) {
+                if (item.components().has(DataComponents.VILLAGER_FOOD)) foods.add(item);
+            }
+            foodHint = BreedingFoodHelper.fromItems(foods);
         }
         return foodHint;
     }

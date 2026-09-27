@@ -50,11 +50,12 @@ dependencies {
 	implementation "dev.isxander:yet-another-config-lib:${project.yacl_version}-fabric"
 	implementation "maven.modrinth:modmenu:${project.modmenu_version}"
 
-	// HudLib (mavenLocal, jar-in-jar)
-	implementation "de.dennisthegamer:hudlib-core:1.1.1"
-	include "de.dennisthegamer:hudlib-core:1.1.1"
-	implementation "de.dennisthegamer:hudlib-ui:1.1.1+mc${project.minecraft_range}"
-	include "de.dennisthegamer:hudlib-ui:1.1.1+mc${project.minecraft_range}"
+	// HudLib (mavenLocal, jar-in-jar). hudlib_mc_range is pinned separately from
+	// minecraft_range on this branch -- see gradle.properties.
+	implementation "de.dennisthegamer:hudlib-core:${project.hudlib_version}"
+	include "de.dennisthegamer:hudlib-core:${project.hudlib_version}"
+	implementation "de.dennisthegamer:hudlib-ui:${project.hudlib_version}+mc${project.hudlib_mc_range}"
+	include "de.dennisthegamer:hudlib-ui:${project.hudlib_version}+mc${project.hudlib_mc_range}"
 
 	testImplementation platform('org.junit:junit-bom:5.11.3')
 	testImplementation 'org.junit.jupiter:junit-jupiter'
